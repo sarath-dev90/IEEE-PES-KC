@@ -23,11 +23,11 @@ export default function ContactPage() {
     ];
 
     const socials = [
-        { icon: 'ri-linkedin-fill', label: 'LinkedIn', link: 'https://www.linkedin.com/company/ieee-pes-kerala/' },
-        { icon: 'ri-instagram-line', label: 'Instagram', link: 'https://www.instagram.com/ieeepeskerala/' },
-        { icon: 'ri-facebook-fill', label: 'Facebook', link: 'https://www.facebook.com/ieeepeskerala' },
-        { icon: 'ri-twitter-x-line', label: 'X (Twitter)', link: 'https://twitter.com/ieeepeskerala' },
-        { icon: 'ri-whatsapp-line', label: 'WhatsApp', link: 'https://whatsapp.com/channel/0029VajmXb82ER6ZqI0P8R1I' },
+        { icon: 'ri-linkedin-fill', label: 'LinkedIn', link: 'https://lnkd.in/gncy6jUc' },
+        { icon: 'ri-instagram-line', label: 'Instagram', link: 'https://lnkd.in/gqyuMs_F' },
+        { icon: 'ri-facebook-fill', label: 'Facebook', link: 'https://lnkd.in/gSJJzeUA' },
+        { icon: 'ri-twitter-x-line', label: 'X (Twitter)', link: 'https://lnkd.in/gkDTj47k' },
+        { icon: 'ri-whatsapp-line', label: 'WhatsApp', link: 'https://lnkd.in/gVR7dmtZ' },
     ];
 
     return (

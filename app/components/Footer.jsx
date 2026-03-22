@@ -11,11 +11,11 @@ export default function Footer() {
                             <Image src="/images/ieee-images/PESKC.png" alt="IEEE PES Kerala" width={150} height={50} style={{ objectFit: 'contain' }} />
                             <p>The IEEE Power and Energy Society Kerala Chapter is dedicated to advancing technology for the benefit of humanity through power and energy innovation.</p>
                             <div className="footer-social">
-                                <a href="https://www.linkedin.com/company/ieee-pes-kerala/" target="_blank" rel="noreferrer" aria-label="LinkedIn"><i className="ri-linkedin-fill"></i></a>
-                                <a href="https://www.facebook.com/ieeepeskerala" target="_blank" rel="noreferrer" aria-label="Facebook"><i className="ri-facebook-fill"></i></a>
-                                <a href="https://www.instagram.com/ieeepeskerala/" target="_blank" rel="noreferrer" aria-label="Instagram"><i className="ri-instagram-line"></i></a>
-                                <a href="https://twitter.com/ieeepeskerala" target="_blank" rel="noreferrer" aria-label="X (Twitter)"><i className="ri-twitter-x-line"></i></a>
-                                <a href="https://whatsapp.com/channel/0029VajmXb82ER6ZqI0P8R1I" target="_blank" rel="noreferrer" aria-label="WhatsApp Channel"><i className="ri-whatsapp-line"></i></a>
+                                <a href="https://lnkd.in/gncy6jUc" target="_blank" rel="noreferrer" aria-label="LinkedIn"><i className="ri-linkedin-fill"></i></a>
+                                <a href="https://lnkd.in/gSJJzeUA" target="_blank" rel="noreferrer" aria-label="Facebook"><i className="ri-facebook-fill"></i></a>
+                                <a href="https://lnkd.in/gqyuMs_F" target="_blank" rel="noreferrer" aria-label="Instagram"><i className="ri-instagram-line"></i></a>
+                                <a href="https://lnkd.in/gkDTj47k" target="_blank" rel="noreferrer" aria-label="X (Twitter)"><i className="ri-twitter-x-line"></i></a>
+                                <a href="https://lnkd.in/gVR7dmtZ" target="_blank" rel="noreferrer" aria-label="WhatsApp Channel"><i className="ri-whatsapp-line"></i></a>
                             </div>
                         </div>
                     </div>

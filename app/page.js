@@ -56,6 +56,19 @@ export default function Home() {
                 offset: 50
             });
 
+            // Hero Slideshow
+            const heroSlides = document.querySelectorAll('.hero-swiper .swiper-slide');
+            if (heroSlides.length > 0) {
+                new Swiper('.hero-swiper', {
+                    modules: [Pagination, Autoplay, EffectFade, Navigation],
+                    slidesPerView: 1,
+                    autoplay: { delay: 10000, disableOnInteraction: false },
+                    effect: 'fade',
+                    fadeEffect: { crossFade: true },
+                    loop: true,
+                });
+            }
+
             // Upcoming Events Swiper
             const upcomingSlides = document.querySelectorAll('.upcoming-events-swiper .swiper-slide');
             if (upcomingSlides.length > 0) {
@@ -203,48 +216,127 @@ export default function Home() {
                     --pes-light: #f8f9fa;
                 }
 
-                /* Peak Professional Light Hero */
+                /* Premium Professional Hero Carousel */
                 .hero-section {
-                    position: relative;
-                    overflow: hidden; 
                     width: 100%;
-                    background-color: #ffffff;
-                    background-image: radial-gradient(circle at 10% 20%, rgba(0, 171, 132, 0.04), transparent 40%),
-                                      radial-gradient(circle at 90% 80%, rgba(0, 98, 155, 0.03), transparent 40%);
+                    position: relative;
                 }
-                
-                /* Subtle engineering grid background */
-                .hero-grid {
+                .hero-swiper {
+                    width: 100%;
+                    height: 85vh;
+                    min-height: 600px;
+                }
+                .slide {
+                    width: 100%;
+                    height: 100%;
+                    background-size: cover;
+                    background-position: center;
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                }
+                .slide::before {
+                    content: '';
                     position: absolute;
                     inset: 0;
-                    background-size: 40px 40px;
-                    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-                                      linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-                    z-index: 0;
+                    background: linear-gradient(90deg, rgba(10, 25, 47, 0.95) 0%, rgba(10, 25, 47, 0.5) 100%);
+                    z-index: 1;
+                }
+                .slide-content-wrapper {
+                    position: relative;
+                    z-index: 2;
+                    max-width: 800px;
+                }
+                .hero-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 0.5rem 1.25rem;
+                    background: rgba(0, 171, 132, 0.15);
+                    border: 1px solid rgba(0, 171, 132, 0.3);
+                    backdrop-filter: blur(10px);
+                    border-radius: 50px;
+                    color: #00e6b3;
+                    font-weight: 600;
+                    font-size: 0.85rem;
+                    text-transform: uppercase;
+                    letter-spacing: 1.5px;
+                    margin-bottom: 2rem;
+                    animation: fadeInDown 1s ease-out;
+                }
+                .hero-title {
+                    font-size: clamp(3rem, 6vw, 4.5rem);
+                    font-weight: 800;
+                    color: #ffffff;
+                    line-height: 1.1;
+                    margin-bottom: 1.5rem;
+                    letter-spacing: -1px;
+                }
+                .hero-title span {
+                    color: #00e6b3;
+                }
+                .hero-subtitle {
+                    font-size: clamp(1.1rem, 2vw, 1.25rem);
+                    color: rgba(255, 255, 255, 0.85);
+                    line-height: 1.6;
+                    margin-bottom: 2.5rem;
+                    max-width: 650px;
+                }
+                .hero-btn {
+                    padding: 1rem 2.5rem;
+                    font-weight: 600;
+                    border-radius: 50px;
+                    transition: all 0.3s ease;
+                    font-size: 1.05rem;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 10px;
+                    text-decoration: none !important;
+                }
+                .btn-primary-custom {
+                    background-color: var(--pes-green);
+                    color: white;
+                    border: 2px solid var(--pes-green);
+                    box-shadow: 0 10px 20px rgba(0, 171, 132, 0.3);
+                }
+                .btn-primary-custom:hover {
+                    background-color: transparent;
+                    color: #00e6b3;
+                    transform: translateY(-2px);
+                }
+                .btn-secondary-custom {
+                    background-color: transparent;
+                    color: white;
+                    border: 2px solid rgba(255,255,255,0.3);
+                }
+                .btn-secondary-custom:hover {
+                    border-color: white;
+                    background-color: white;
+                    color: #0a192f;
+                    transform: translateY(-2px);
+                }
+                
+                @media (max-width: 767px) {
+                    .hero-swiper { height: 75vh; min-height: 500px; }
+                    .slide::before { background: linear-gradient(0deg, rgba(10, 25, 47, 0.95) 0%, rgba(10, 25, 47, 0.6) 100%); }
                 }
 
-                .hero-image-container {
-                    border: 1px solid rgba(0, 0, 0, 0.05);
-                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+
+                    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
                 }
 
-                @media (max-width: 768px) {
-                    .hero-section {
-                        min-height: auto !important;
-                        padding-top: 5rem !important; 
-                        padding-bottom: 5rem !important;
-                    }
-                    
-                    .hero-section h1 { font-size: 2.5rem !important; }
-                    .hero-section .lead { font-size: 1.05rem !important; }
-                    .hero-section .btn { width: 100%; display: block; text-align: center; }
-                    
-                    .stats-container {
-                        flex-direction: column !important;
-                        align-items: flex-start !important;
-                        gap: 1.5rem !important;
-                    }
-                    .stats-divider { display: none; }
+                .hero-stat-card:hover {
+                    transform: translateY(-12px);
+                    box-shadow: 0 40px 60px -15px rgba(0,171,132,0.15);
+                }
+
+                @media (max-width: 991px) {
+                    .hero-section { padding: 6rem 0 8rem 0; }
+                    .hero-stats-wrapper { margin-top: -2rem; }
+                }
+
+                @media (max-width: 576px) {
+                    .hero-stats-wrapper { margin-top: 1rem; }
+                    .hero-section { padding: 5rem 0 3rem 0; }
                 }
 
                 .hero-btn:hover {
@@ -329,88 +421,68 @@ export default function Home() {
             <div className="box-layout">
                 <Navbar />
 
-                {/* Peak Professional Light Hero Section */}
-                <div id="hero" className="hero-section d-flex align-items-center" style={{ minHeight: '85vh' }}>
-                    <div className="hero-grid"></div>
+                {/* Premium Professional Full-Width Slider Hero Section */}
+                <div id="hero" className="hero-section">
+                    <div className="swiper hero-swiper">
+                        <div className="swiper-wrapper">
+                            {/* Slide 1 */}
+                            <div className="swiper-slide">
+                                <div className="slide" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80)' }}>
+                                    <div className="container h-100 position-relative">
+                                        <div className="row h-100 align-items-center">
+                                            <div className="col-lg-9 slide-content-wrapper p-4 p-md-0" data-aos="fade-up" data-aos-duration="1000">
 
-                    <div className="container position-relative py-5" style={{ zIndex: 2 }}>
-                        <div className="row align-items-center g-5 pt-lg-5">
-                            <div className="col-lg-7" data-aos="fade-right" data-aos-duration="1000">
-                                <div className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-4" style={{ background: 'rgba(255,255,255,0.8)', border: '1px solid rgba(0,0,0,0.08)', backdropFilter: 'blur(10px)', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
-                                    <span className="badge rounded-pill px-3 py-2 text-uppercase fw-bold text-white" style={{ backgroundColor: 'var(--pes-green) !important', letterSpacing: '0.5px', fontSize: '0.7rem' }}>Award Winning Chapter</span>
-                                    <span className="text-secondary fw-semibold d-none d-sm-inline" style={{ fontSize: '0.9rem' }}>Founded 1999</span>
-                                </div>
-
-                                <h1 className="fw-bolder display-3 mb-4" style={{ letterSpacing: '-1px', lineHeight: '1.2', color: '#0f172a' }}>
-                                    Powering Kerala's <br className="d-none d-md-block" />
-                                    <span className="pb-1 d-inline-block position-relative" style={{ background: 'linear-gradient(90deg, #00ab84, #0077b5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                                        Energy Future
-                                    </span>
-                                </h1>
-
-                                <p className="lead mb-4 text-secondary" style={{ fontSize: '1.15rem', lineHeight: '1.6', maxWidth: '580px' }}>
-                                    Join India's premier IEEE PES chapter with <strong style={{ color: '#0f172a' }}>1,200+ members</strong>, <strong style={{ color: '#0f172a' }}>50+ student branches</strong>, and a legacy of excellence in electric power and energy innovation.
-                                </p>
-
-                                <div className="d-flex flex-wrap gap-3 mb-5">
-                                    <Link href="/membership" className="btn btn-lg rounded-pill text-white px-5 py-3 fw-bold hero-btn shadow" style={{ backgroundColor: 'var(--pes-green)' }}>
-                                        Become a Member
-                                        <i className="ri-arrow-right-line ms-2"></i>
-                                    </Link>
-                                    <Link href="/events" className="btn btn-lg rounded-pill px-5 py-3 fw-bold hero-btn-outline">
-                                        Explore Events
-                                    </Link>
-                                </div>
-
-                                <div className="d-flex flex-wrap gap-4 align-items-center border-top pt-4 stats-container" style={{ borderColor: 'rgba(0,0,0,0.08) !important' }}>
-                                    <div>
-                                        <h3 className="fw-bold fs-2 mb-0" style={{ color: '#0f172a' }}>1,200+</h3>
-                                        <p className="small mb-0 text-uppercase fw-semibold text-muted" style={{ letterSpacing: '0.5px' }}>Members</p>
-                                    </div>
-                                    <div className="stats-divider" style={{ width: '1px', height: '40px', backgroundColor: 'rgba(0,0,0,0.1)' }}></div>
-                                    <div>
-                                        <h3 className="fw-bold fs-2 mb-0" style={{ color: '#0f172a' }}>50+</h3>
-                                        <p className="small mb-0 text-uppercase fw-semibold text-muted" style={{ letterSpacing: '0.5px' }}>Student Branches</p>
-                                    </div>
-                                    <div className="stats-divider" style={{ width: '1px', height: '40px', backgroundColor: 'rgba(0,0,0,0.1)' }}></div>
-                                    <div>
-                                        <h3 className="fw-bold fs-2 mb-0" style={{ color: '#0f172a' }}>#1</h3>
-                                        <p className="small mb-0 text-uppercase fw-semibold text-muted" style={{ letterSpacing: '0.5px' }}>Global Ranking</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="col-lg-5 d-none d-lg-block" data-aos="fade-left" data-aos-duration="1200" data-aos-delay="200">
-                                <div className="position-relative mt-4">
-                                    {/* Offset Decorative Border */}
-                                    <div className="position-absolute rounded-4" style={{ top: '25px', left: '-25px', right: '25px', bottom: '-25px', border: '1px solid rgba(0,171,132,0.3)', zIndex: 0 }}></div>
-
-                                    <div className="rounded-4 overflow-hidden position-relative hero-image-container bg-white" style={{ zIndex: 1 }}>
-                                        <img
-                                            src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                                            alt="IEEE PES Kerala Chapter Engineering"
-                                            className="w-100 object-fit-cover"
-                                            style={{ height: '520px' }}
-                                        />
-                                        
-                                        {/* Image Gradient Light Overlay for depth */}
-                                        <div className="position-absolute inset-0 w-100 h-100" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 40%)', top: 0, left: 0 }}></div>
-
-                                        <div className="position-absolute bottom-0 start-0 m-4 p-3 rounded-3 shadow-lg floating-badge d-flex align-items-center gap-3" style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', border: '1px solid rgba(0,0,0,0.05)', maxWidth: '280px' }}>
-                                            <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '55px', height: '55px' }}>
-                                                <i className="ri-trophy-line fs-2" style={{ color: 'var(--pes-green)' }}></i>
-                                            </div>
-                                            <div>
-                                                <h6 className="mb-1 fw-bold fs-6" style={{ letterSpacing: '0.3px', color: '#0f172a' }}>Outstanding Chapter</h6>
-                                                <p className="mb-0 small text-muted">IEEE PES Award</p>
+                                                <h1 className="hero-title">
+                                                    Empowering the Future of <br className="d-none d-md-block" />
+                                                    <span>Power &amp; Energy</span>
+                                                </h1>
+                                                <p className="hero-subtitle">
+                                                    Join India's premier IEEE PES chapter. We foster technological innovation, excellence, and provide high-quality educational programs in the energy sector for the benefit of humanity.
+                                                </p>
+                                                <div className="d-flex flex-wrap gap-3">
+                                                    <Link href="/membership" className="hero-btn btn-primary-custom">
+                                                        Become a Member <i className="ri-arrow-right-line"></i>
+                                                    </Link>
+                                                    <Link href="/events" className="hero-btn btn-secondary-custom">
+                                                        Latest Activities
+                                                    </Link>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            
+                            {/* Slide 2 */}
+                            <div className="swiper-slide">
+                                <div className="slide" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1508514177221-188b1fc16e9d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80)' }}>
+                                    <div className="container h-100 position-relative">
+                                        <div className="row h-100 align-items-center">
+                                            <div className="col-lg-9 slide-content-wrapper p-4 p-md-0">
+
+                                                <h1 className="hero-title">
+                                                    Advancing Technology <br className="d-none d-md-block" />
+                                                    <span>For Humanity</span>
+                                                </h1>
+                                                <p className="hero-subtitle">
+                                                    Connect with over 1,200 power engineering professionals and experts. Gain access to exclusive technical seminars, industry insights, and career-defining networking opportunities.
+                                                </p>
+                                                <div className="d-flex flex-wrap gap-3">
+                                                    <Link href="/events" className="hero-btn btn-primary-custom">
+                                                        View Latest Events <i className="ri-arrow-right-line"></i>
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                         </div>
                     </div>
                 </div>
+
+
 
                 {/* About Message Section */}
                 <div className="container py-5 mt-4">

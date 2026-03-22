@@ -1,8 +1,11 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
 export default function Navbar() {
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+
     return (
         <header id="header" className="site-header" role="banner">
             <div id="meta-nav" className="hidden-xs d-none d-sm-block">
@@ -22,8 +25,10 @@ export default function Navbar() {
             </div>
             <div className="container">
                 <div className="row align-items-center" id="logo-search">
-                    <div id="mobile-menu" className="col-sm-2 col-xs-2 col-2 d-lg-none">
-                        <button><i className="fa fa-bars" aria-hidden="true"></i> <span>MENU</span></button>
+                    <div id="mobile-menu" className={`col-sm-2 col-xs-2 col-2 d-lg-none ${isMenuOpen ? 'active' : ''}`}>
+                        <button onClick={() => setIsMenuOpen(true)}>
+                            <i className="fa fa-bars" aria-hidden="true"></i> <span>MENU</span>
+                        </button>
                     </div>
                     <div className="col-lg-7 col-md-7 col-sm-8 col-xs-8 col-8" id="logo" role="logo">
                         <Link href="/" title="IEEE PES Kerala Chapter" className="d-flex align-items-center">
@@ -37,26 +42,50 @@ export default function Navbar() {
                             </div>
                         </div>
                     </div>
+                    <div id="mobile-search" className="col-sm-2 col-xs-2 col-2 d-lg-none text-end text-right">
+                        <button className="toggle-search"><span>SEARCH</span> <i className="fa fa-search" aria-hidden="true"></i></button>
+                    </div>
                 </div>
             </div>
 
-            <div id="main-nav" className="d-none d-lg-block pb-0">
+            <div id="main-nav" className={isMenuOpen ? 'd-block' : 'd-none d-lg-block'} style={isMenuOpen ? { display: 'block !important' } : {}}>
                 <div className="container">
                     <div className="row">
                         <div className="col-xs-12 col-12" role="navigation">
-                            <ul id="nav" className="d-flex justify-content-center align-items-center list-unstyled mb-0" style={{ flexWrap: 'wrap', gap: '5px' }}>
-                                <li className="menu-item py-2 px-2"><Link href="/" style={{ textDecoration: 'none' }}>Home</Link></li>
-                                <li className="menu-item py-2 px-2"><Link href="/pages/about" style={{ textDecoration: 'none' }}>About</Link></li>
-                                <li className="menu-item py-2 px-2"><Link href="/pages/execom" style={{ textDecoration: 'none' }}>Execom</Link></li>
-                                <li className="menu-item py-2 px-2"><Link href="/pages/initiatives" style={{ textDecoration: 'none' }}>Activities</Link></li>
-                                <li className="menu-item py-2 px-2"><Link href="/pages/upcoming-events" style={{ textDecoration: 'none' }}>Events</Link></li>
-                                <li className="menu-item py-2 px-2"><Link href="/pages/membership-benefits" style={{ textDecoration: 'none' }}>Membership</Link></li>
-                                <li className="menu-item py-2 px-2"><Link href="/pages/gallery" style={{ textDecoration: 'none' }}>Gallery</Link></li>
-                                <li className="menu-item py-2 px-2"><Link href="/pages/resources" style={{ textDecoration: 'none' }}>Resources</Link></li>
-                                <li className="menu-item py-2 px-2"><Link href="/pages/newsletters" style={{ textDecoration: 'none' }}>Newsletters</Link></li>
-                                <li className="menu-item py-2 px-2"><Link href="/pages/contact" style={{ textDecoration: 'none' }}>Contact</Link></li>
-                                <li className="menu-item py-2 px-2"><a href="https://www.ieee.org/membership/join/index.html" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>Join IEEE</a></li>
+                            {isMenuOpen && (
+                                <button className="close-menu d-block d-lg-none" onClick={() => setIsMenuOpen(false)}>
+                                    <i className="fa fa-times" aria-hidden="true"></i>
+                                </button>
+                            )}
+                            <ul id="nav" className={`list-unstyled mb-0 ${isMenuOpen ? '' : 'd-flex justify-content-center align-items-center'}`} style={{ flexWrap: 'wrap', gap: isMenuOpen ? '10px' : '5px' }}>
+                                <li className="menu-item py-2 px-2"><Link href="/" onClick={() => setIsMenuOpen(false)}>Home</Link></li>
+                                <li className="menu-item py-2 px-2"><Link href="/pages/about" onClick={() => setIsMenuOpen(false)}>About</Link></li>
+                                <li className="menu-item py-2 px-2"><Link href="/pages/execom" onClick={() => setIsMenuOpen(false)}>Execom</Link></li>
+                                <li className="menu-item py-2 px-2"><Link href="/pages/initiatives" onClick={() => setIsMenuOpen(false)}>Activities</Link></li>
+                                <li className="menu-item py-2 px-2"><Link href="/pages/upcoming-events" onClick={() => setIsMenuOpen(false)}>Events</Link></li>
+                                <li className="menu-item py-2 px-2"><Link href="/pages/membership-benefits" onClick={() => setIsMenuOpen(false)}>Membership</Link></li>
+                                <li className="menu-item py-2 px-2"><Link href="/pages/gallery" onClick={() => setIsMenuOpen(false)}>Gallery</Link></li>
+                                <li className="menu-item py-2 px-2"><Link href="/pages/resources" onClick={() => setIsMenuOpen(false)}>Resources</Link></li>
+                                <li className="menu-item py-2 px-2"><Link href="/pages/newsletters" onClick={() => setIsMenuOpen(false)}>Newsletters</Link></li>
+                                <li className="menu-item py-2 px-2"><Link href="/pages/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link></li>
+                                <li className="menu-item py-2 px-2"><a href="https://www.ieee.org/membership/join/index.html" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)}>Join IEEE</a></li>
                             </ul>
+                            
+                            {isMenuOpen && (
+                                <>
+                                    <a href="https://www.ieee.org/" target="_blank" rel="noreferrer" className="ieee-logo d-block d-lg-none">
+                                        <img src="/pes-theme/images/logo-ieee.png" alt="IEEE Logo" className="img-fluid" style={{ maxWidth: '140px' }} />
+                                    </a>
+                                    <div id="social-links-mobile" className="d-block d-lg-none">
+                                        <a href="https://ieee-collabratec.ieee.org/" className="ico-collabratec" target="_blank" rel="noreferrer"></a>
+                                        <a href="https://lnkd.in/gkDTj47k" target="_blank" rel="noreferrer"><i className="fa fa-twitter" aria-hidden="true"></i></a>
+                                        <a href="https://lnkd.in/gSJJzeUA" target="_blank" rel="noreferrer"><i className="fa fa-facebook" aria-hidden="true"></i></a>
+                                        <a href="https://lnkd.in/gncy6jUc" target="_blank" rel="noreferrer"><i className="fa fa-linkedin" aria-hidden="true"></i></a>
+                                        <a href="https://lnkd.in/gqyuMs_F" target="_blank" rel="noreferrer"><i className="fa fa-instagram" aria-hidden="true"></i></a>
+                                        <a href="https://lnkd.in/gVR7dmtZ" target="_blank" rel="noreferrer"><i className="fa fa-whatsapp" aria-hidden="true"></i></a>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
