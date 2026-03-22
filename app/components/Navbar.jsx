@@ -22,7 +22,7 @@ export default function Navbar() {
             </div>
             <div className="container">
                 <div className="row align-items-center" id="logo-search">
-                    <div id="mobile-menu" className="col-sm-2 col-xs-2 col-2 d-sm-none">
+                    <div id="mobile-menu" className="col-sm-2 col-xs-2 col-2 d-lg-none">
                         <button><i className="fa fa-bars" aria-hidden="true"></i> <span>MENU</span></button>
                     </div>
                     <div className="col-lg-7 col-md-7 col-sm-8 col-xs-8 col-8" id="logo" role="logo">
@@ -30,7 +30,7 @@ export default function Navbar() {
                             <Image src="/images/ieee-images/IEEE_logo.png" alt="IEEE PES Kerala" priority width={320} height={100} style={{ objectFit: 'contain' }} />
                         </Link>
                     </div>
-                    <div className="col-lg-5 col-md-5 col-sm-5 col-xs-12 col-12 text-end text-right d-none d-md-block d-flex align-items-center justify-content-end" id="search">
+                    <div className="col-lg-5 col-md-5 col-sm-5 col-xs-12 col-12 text-end text-right d-none d-lg-flex align-items-center justify-content-end" id="search">
                         <div className="row search-block justify-content-end w-100 mt-3 mt-md-0">
                             <div className="col-lg-4 col-md-4 col-sm-4 col-xs-12 col-12 logo-ieee-block">
                                 <a href="https://www.ieee.org/" target="_blank" id="logo-ieee" rel="noreferrer"><img src="/pes-theme/images/logo-ieee.png" alt="IEEE" className="lazyload img-fluid" /></a>
@@ -40,7 +40,7 @@ export default function Navbar() {
                 </div>
             </div>
 
-            <div id="main-nav" className="d-none d-md-block hidden-sm hidden-xs pb-0">
+            <div id="main-nav" className="d-none d-lg-block pb-0">
                 <div className="container">
                     <div className="row">
                         <div className="col-xs-12 col-12" role="navigation">

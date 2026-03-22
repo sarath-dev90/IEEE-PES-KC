@@ -36,7 +36,7 @@ export default function AwardsPage() {
             <section className="section-padding">
                 <div className="container">
                     <div className="section-header mb-5">
-                        <span className="section-badge">Recognition</span>
+                        
                         <h2 className="section-title mt-3">Celebrating Excellence</h2>
                         <p className="section-desc">Our awards program celebrates the achievements of members who make an outstanding difference.</p>
                     </div>

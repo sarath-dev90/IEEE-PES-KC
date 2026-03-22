@@ -1,6 +1,5 @@
 'use client';
-import { useEffect } from 'react';
-import Script from 'next/script';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Navbar from './components/Navbar';
@@ -13,7 +12,6 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
-import { useState } from 'react';
 
 export default function Home() {
     const [events, setEvents] = useState([]);
@@ -21,34 +19,23 @@ export default function Home() {
     const [gallery, setGallery] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Fetch data from API
     useEffect(() => {
-        console.log('Fetching data from /api/admin');
         fetch('/api/admin')
             .then(res => {
-                console.log('Response status:', res.status);
-                if (!res.ok) {
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                 return res.json();
             })
             .then(data => {
-                console.log('Received data:', data);
-                // The API returns { success: true, data: {...} }
                 if (data.success && data.data) {
                     setEvents(data.data.events || []);
                     setAnnouncements(data.data.announcements || []);
                     setGallery(data.data.gallery || []);
-                } else {
-                    // Fallback to empty arrays
-                    setEvents([]);
-                    setAnnouncements([]);
-                    setGallery([]);
                 }
                 setIsLoading(false);
             })
             .catch(err => {
                 console.error("Error fetching home data:", err);
-                // Set empty arrays on error so the page still renders
                 setEvents([]);
                 setAnnouncements([]);
                 setGallery([]);
@@ -56,200 +43,73 @@ export default function Home() {
             });
     }, []);
 
+    // Initialize scripts after data loads
     useEffect(() => {
         if (isLoading) return;
-        // Helper to load AOS/Swiper if they are global
+
         const initScripts = () => {
+            // Initialize AOS
             AOS.init({
                 duration: 600,
                 easing: 'ease-out',
-                once: true
+                once: true,
+                offset: 50
             });
 
-            // Marquee Scroll Effect
-            window.addEventListener('scroll', () => {
+            // Upcoming Events Swiper
+            const upcomingSlides = document.querySelectorAll('.upcoming-events-swiper .swiper-slide');
+            if (upcomingSlides.length > 0) {
+                new Swiper('.upcoming-events-swiper', {
+                    modules: [Pagination, Autoplay, EffectFade],
+                    slidesPerView: 1,
+                    autoplay: { delay: 3500, disableOnInteraction: false },
+                    pagination: { el: '.upcoming-swiper-pagination', clickable: true },
+                    loop: upcomingSlides.length > 1,
+                    effect: 'fade',
+                    fadeEffect: { crossFade: true }
+                });
+            }
+
+            // Recent Events Swiper
+            const recentSlides = document.querySelectorAll('.recent-events-swiper .swiper-slide');
+            if (recentSlides.length > 0) {
+                new Swiper('.recent-events-swiper', {
+                    modules: [Pagination, Autoplay],
+                    slidesPerView: 1,
+                    spaceBetween: 20,
+                    breakpoints: {
+                        768: { slidesPerView: 2, spaceBetween: 24 },
+                        1024: { slidesPerView: 3, spaceBetween: 24 },
+                        1200: { slidesPerView: 4, spaceBetween: 24 }
+                    },
+                    autoplay: { delay: 4000, disableOnInteraction: false },
+                    pagination: { el: '.recent-events-pagination', clickable: true },
+                    loop: recentSlides.length > 3,
+                });
+            }
+
+            // Gallery Marquee Scroll Effect
+            const handleMarqueeScroll = () => {
                 const marquee = document.querySelector('.marquee-wrapper');
                 if (marquee) {
                     const scrollPos = window.scrollY;
-                    marquee.style.transform = `translateX(${-scrollPos * 1.8}px)`;
+                    marquee.style.transform = `translateX(${-scrollPos * 0.5}px)`;
                 }
-            });
+            };
+            window.addEventListener('scroll', handleMarqueeScroll, { passive: true });
 
-            // Destroy existing swipers to recreate them with new dynamic content if necessary
-            // Note: Simple loop/re-init is usually fine with React if handled correctly
-
-            // Initialize Swiper
-            new Swiper('.gallery-swiper', {
-                modules: [Navigation, Pagination, Autoplay],
-                slidesPerView: 1,
-                spaceBetween: 20,
-                pagination: {
-                    el: '.gallery-swiper .swiper-pagination',
-                    clickable: true,
-                },
-                navigation: {
-                    nextEl: '.gallery-swiper .swiper-button-next',
-                    prevEl: '.gallery-swiper .swiper-button-prev',
-                },
-                breakpoints: {
-                    576: { slidesPerView: 2 },
-                    992: { slidesPerView: 3 },
-                    1200: { slidesPerView: 4 }
-                },
-                autoplay: {
-                    delay: 3000,
-                    disableOnInteraction: false,
-                },
-                loop: document.querySelectorAll('.gallery-swiper .swiper-slide').length > 4
-            });
-
-            // Initialize Update Carousels
-            new Swiper('.upcoming-update-swiper', {
-                modules: [Navigation, Pagination, Autoplay],
-                slidesPerView: 1,
-                spaceBetween: 15,
-                autoplay: { delay: 4000 },
-                pagination: { el: '.upcoming-update-swiper .swiper-pagination', clickable: true },
-                navigation: { nextEl: '.upcoming-update-swiper .swiper-button-next', prevEl: '.upcoming-update-swiper .swiper-button-prev' },
-                loop: document.querySelectorAll('.upcoming-update-swiper .swiper-slide').length > 1
-            });
-
-            new Swiper('.recent-update-swiper', {
-                modules: [Navigation, Autoplay],
-                slidesPerView: 1,
-                spaceBetween: 15,
-                autoplay: { delay: 5000 },
-                navigation: { nextEl: '.recent-update-swiper .swiper-button-next', prevEl: '.recent-update-swiper .swiper-button-prev' },
-                loop: document.querySelectorAll('.recent-update-swiper .swiper-slide').length > 1
-            });
-
-            // Initialize Flagship Swipers
-            new Swiper('.akpessc-swiper', {
-                modules: [Navigation, Pagination],
-                slidesPerView: 1,
-                spaceBetween: 30,
-                loop: document.querySelectorAll('.akpessc-swiper .swiper-slide').length > 1,
-                pagination: {
-                    el: '.akpessc-swiper .swiper-pagination',
-                    clickable: true,
-                },
-                navigation: {
-                    nextEl: '.akpessc-swiper .swiper-button-next',
-                    prevEl: '.akpessc-swiper .swiper-button-prev',
-                },
-            });
-
-            const headerSwiperEl = document.querySelector('.header-swiper');
-            let headerSwiper = null;
-            if (headerSwiperEl) {
-                headerSwiper = new Swiper('.header-swiper', {
-                    modules: [EffectFade],
-                    effect: 'fade',
-                    fadeEffect: { crossFade: true },
-                    allowTouchMove: false,
-                });
-            }
-
-            // Initialize main Hero Slider (Flagship)
-            const flagSwiperEl = document.querySelector('.flag-swiper');
-            if (flagSwiperEl) {
-                const flagshipSwiper = new Swiper('.flag-swiper', {
-                    modules: [Navigation, Pagination, Autoplay],
-                    slidesPerView: 1,
-                    spaceBetween: 30,
-                    autoplay: { delay: 6000, disableOnInteraction: false },
-                    pagination: { el: '.flag-swiper .swiper-pagination', clickable: true },
-                    navigation: { nextEl: '.flag-swiper .swiper-button-next', prevEl: '.flag-swiper .swiper-button-prev' },
-                    on: {
-                        slideChange: function () {
-                            if (headerSwiper) {
-                                headerSwiper.slideTo(this.activeIndex);
-                            }
-                        }
-                    }
-                });
-
-                const playBtn = document.querySelector('.hero-play-btn');
-                const pauseBtn = document.querySelector('.hero-pause-btn');
-                if (playBtn && pauseBtn) {
-                    playBtn.addEventListener('click', () => {
-                        flagshipSwiper.autoplay.start();
-                        playBtn.style.opacity = '1';
-                        pauseBtn.style.opacity = '0.5';
-                    });
-                    pauseBtn.addEventListener('click', () => {
-                        flagshipSwiper.autoplay.stop();
-                        pauseBtn.style.opacity = '1';
-                        playBtn.style.opacity = '0.5';
-                    });
-                    
-                    if (flagshipSwiper.autoplay.running) {
-                        playBtn.style.opacity = '1';
-                        pauseBtn.style.opacity = '0.5';
-                    } else {
-                        pauseBtn.style.opacity = '1';
-                        playBtn.style.opacity = '0.5';
-                    }
-                }
-            }
-
-            // Initialize Upcoming Events Slider
-            const upcomingSwiperEl = document.querySelector('.upcoming-events-swiper');
-            if (upcomingSwiperEl) {
-                new Swiper('.upcoming-events-swiper', {
-                    modules: [Pagination, Autoplay],
-                    slidesPerView: 1,
-                    autoplay: { delay: 4000, disableOnInteraction: false },
-                    pagination: { el: '.upcoming-swiper-pagination', clickable: true },
-                    loop: true,
-                });
-            }
-
-            // Animated Counters Logic
-            const counters = document.querySelectorAll('.counter');
-            if (counters.length > 0) {
-                const animateCounter = (counter) => {
-                    const target = +counter.getAttribute('data-target');
-                    const duration = 2000; // ms
-                    const increment = target / (duration / 16); // 60fps
-
-                    let current = 0;
-                    const updateCounter = () => {
-                        current += increment;
-                        if (current < target) {
-                            counter.innerText = Math.ceil(current).toLocaleString('en-US');
-                            requestAnimationFrame(updateCounter);
-                        } else {
-                            counter.innerText = target.toLocaleString('en-US');
-                        }
-                    };
-                    updateCounter();
-                };
-
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            animateCounter(entry.target);
-                            observer.unobserve(entry.target);
-                        }
-                    });
-                }, { threshold: 0.5 });
-
-                counters.forEach(counter => observer.observe(counter));
-            }
             // Gallery Preview Logic
             let galleryTimer;
             const modal = document.getElementById('galleryPreview');
             const img = document.getElementById('previewImg');
             const timerBar = document.getElementById('previewTimer');
 
-            function openGalleryPreview(imgSrc) {
+            const openGalleryPreview = (imgSrc) => {
                 if (!img || !modal || !timerBar) return;
                 img.src = imgSrc;
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
 
-                // Reset and start timer bar
                 timerBar.style.transition = 'none';
                 timerBar.style.width = '100%';
 
@@ -260,83 +120,43 @@ export default function Home() {
 
                 clearTimeout(galleryTimer);
                 galleryTimer = setTimeout(closeGalleryPreview, 10000);
-            }
+            };
 
-            function closeGalleryPreview() {
+            const closeGalleryPreview = () => {
                 if (!modal) return;
                 modal.classList.remove('active');
                 document.body.style.overflow = '';
                 clearTimeout(galleryTimer);
-            }
+            };
 
-            // Close on background click
             if (modal) modal.onclick = closeGalleryPreview;
 
-            // Attach clicks to gallery cards
             document.querySelectorAll('.gallery-card').forEach(card => {
                 card.addEventListener('click', () => {
                     const imgElement = card.querySelector('img');
-                    if (imgElement) {
-                        openGalleryPreview(imgElement.src);
-                    }
+                    if (imgElement) openGalleryPreview(imgElement.src);
                 });
             });
 
             const closeBtn = document.querySelector('.gallery-preview-close');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', closeGalleryPreview);
-            }
+            if (closeBtn) closeBtn.addEventListener('click', closeGalleryPreview);
 
-            // High-Performance 144fps 3D Interpolated Tilt
-            const heroSection = document.querySelector('.hero-section');
-            const heroIsland = document.querySelector('.hero-island');
-
-            if (heroSection && heroIsland) {
-                let targetX = 0, targetY = 0;
-                let currentX = 0, currentY = 0;
-                const easing = 0.08;
-                let rafId = null;
-
-                function updateTilt() {
-                    currentX += (targetX - currentX) * easing;
-                    currentY += (targetY - currentY) * easing;
-
-                    heroIsland.style.transform = `rotateY(${currentX.toFixed(3)}deg) rotateX(${currentY.toFixed(3)}deg)`;
-
-                    if (Math.abs(targetX - currentX) > 0.01 || Math.abs(targetY - currentY) > 0.01) {
-                        rafId = requestAnimationFrame(updateTilt);
-                    } else {
-                        rafId = null;
-                        heroIsland.style.transform = `rotateY(${targetX}deg) rotateX(${targetY}deg)`;
-                    }
-                }
-
-                heroSection.addEventListener('mousemove', (e) => {
-                    const { clientX, clientY } = e;
-                    const { innerWidth, innerHeight } = window;
-                    targetX = (clientX / innerWidth - 0.5) * 20;
-                    targetY = (clientY / innerHeight - 0.5) * -20;
-                    if (!rafId) rafId = requestAnimationFrame(updateTilt);
-                }, { passive: true });
-
-                heroSection.addEventListener('mouseleave', () => {
-                    targetX = 0; targetY = 0;
-                    if (!rafId) rafId = requestAnimationFrame(updateTilt);
-                }, { passive: true });
-            }
+            return () => {
+                window.removeEventListener('scroll', handleMarqueeScroll);
+            };
         };
 
-        const timer = setTimeout(initScripts, 500);
+        const timer = setTimeout(initScripts, 300);
         return () => clearTimeout(timer);
     }, [isLoading, events, gallery, announcements]);
 
+    // Helper function to categorize events
     const getCategorizedEvents = () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
         const upcoming = [];
         const recent = [];
-        const past = [];
 
         events.forEach(event => {
             const evDate = new Date(event.date);
@@ -345,475 +165,612 @@ export default function Home() {
             if (evDate > today) {
                 upcoming.push(event);
             } else {
-                const diffTime = Math.abs(today - evDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (diffDays <= 30) {
-                    recent.push(event);
-                } else {
-                    past.push(event);
-                }
+                recent.push(event);
             }
         });
 
-        return { upcoming, recent, past };
+        return { upcoming, recent };
     };
 
-    const { upcoming, recent, past } = getCategorizedEvents();
-    const akpesscEvents = events.filter(e => e.tag?.toLowerCase().includes('akpessc'));
-    const wowEvents = events.filter(e => e.tag?.toLowerCase().includes('wow'));
-    const displayEventsCards = [...recent, ...past].slice(0, 4);
+    const { upcoming, recent } = getCategorizedEvents();
 
-    const galleryVideos = [
-        { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", img: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Future of Grid Modernization - IEEE PES Webinar", views: "3.2K", time: "2 days ago", duration: "1:05:20" },
-        { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", img: "https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Renewable Energy Integration Challenges and Solutions", views: "5.1K", time: "1 week ago", duration: "45:30" },
-        { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", img: "https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Smart Grid Technologies & Applications for 2026", views: "2.8K", time: "3 weeks ago", duration: "52:15" },
-        { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", img: "https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "IEEE PES Women in Power Leadership Panel Discussion", views: "1.9K", time: "1 month ago", duration: "1:15:00" },
-        { url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ", img: "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Electric Vehicle Charging Infrastructure: The Next Decade", views: "4.5K", time: "2 months ago", duration: "38:45" }
+    // Fallback Data
+    const fallbackAnnouncements = [
+        { date: "March 15, 2026", title: "Call for Papers: Power Systems Conference 2026", description: "Submit your research papers for the upcoming international conference on power systems." },
+        { date: "March 10, 2026", title: "New Student Chapter Launched at CET", description: "Welcoming the newest addition to our growing student chapter network." },
+        { date: "March 1, 2026", title: "Membership Drive 2026 Begins", description: "Join IEEE PES Kerala Chapter and get exclusive benefits." }
     ];
 
-    return(
+    const displayAnnouncements = announcements.length > 0 ? announcements : fallbackAnnouncements;
+
+    const galleryImages = [
+        { img: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "IEEE PES Conference 2025" },
+        { img: "https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Workshop on Smart Grids" },
+        { img: "https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Technical Seminar Series" },
+        { img: "https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Student Chapter Meeting" },
+        { img: "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Industry Expert Talk" },
+        { img: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Networking Event" },
+    ];
+
+    const displayGallery = gallery.length > 0 ? gallery.map(g => ({ img: g.imageUrl || g.url, title: g.title || g.name })) : galleryImages;
+
+    return (
         <>
-        <div className="box-layout">
-            {/* Header Components Imported Globally */}
-            <Navbar />
+            <style jsx global>{`
+                :root {
+                    --pes-green: #00ab84;
+                    --pes-dark: #1a1a1a;
+                    --pes-light: #f8f9fa;
+                }
 
-            {/* Hero Section — cmte.ieee.org Slideshow Style */}
-            <div id="hero" className="hero-section position-relative overflow-hidden" style={{ minHeight: '100svh' }}>
-                <style dangerouslySetInnerHTML={{__html: `
-                    #hero .slide {
-                        min-height: 100svh;
-                        background-size: cover;
-                        background-position: center center;
-                        display: flex;
-                        align-items: center;
-                        position: relative;
-                    }
-                    #hero .slide::before {
-                        content: '';
-                        position: absolute;
-                        inset: 0;
-                        background: linear-gradient(to right, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 100%);
-                    }
-                    #hero .slide .inner-content {
-                        position: relative;
-                        z-index: 2;
-                        color: white;
-                    }
-                    #hero .slide .inner-content h1 {
-                        font-size: clamp(1.8rem, 4vw, 3.2rem);
-                        font-weight: 800;
-                        line-height: 1.2;
-                        margin-bottom: 1rem;
-                        text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-                    }
-                    #hero .slide .inner-content h2 {
-                        font-size: clamp(1rem, 2vw, 1.4rem);
-                        font-weight: 300;
-                        margin-bottom: 2rem;
-                        opacity: 0.95;
-                        text-shadow: 0 1px 4px rgba(0,0,0,0.6);
-                    }
-                    #hero .flag-swiper .swiper-button-next,
-                    #hero .flag-swiper .swiper-button-prev {
-                        color: white;
-                        background: rgba(255,255,255,0.15);
-                        backdrop-filter: blur(8px);
-                        border-radius: 50%;
-                        width: 50px;
-                        height: 50px;
-                        border: 1px solid rgba(255,255,255,0.3);
-                    }
-                    #hero .flag-swiper .swiper-button-next::after,
-                    #hero .flag-swiper .swiper-button-prev::after {
-                        font-size: 16px;
-                        font-weight: 900;
-                    }
-                    #hero .hero-play-pause {
-                        position: absolute;
-                        bottom: 30px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        z-index: 20;
-                        display: flex;
-                        gap: 12px;
-                    }
-                    #hero .hero-play-pause button {
-                        width: 46px;
-                        height: 46px;
-                        border-radius: 50%;
-                        background: rgba(255,255,255,0.2);
-                        backdrop-filter: blur(10px);
-                        border: 1px solid rgba(255,255,255,0.4);
-                        color: white;
-                        font-size: 1.1rem;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        cursor: pointer;
-                        transition: background 0.3s, opacity 0.3s;
-                    }
-                    #hero .hero-play-pause button:hover {
-                        background: rgba(255,255,255,0.35);
-                    }
-                    @media (max-width: 768px) {
-                        #hero .slide { height: 100svh !important; min-height: 100svh !important; }
-                        #hero .slide .inner-content { 
-                            padding-top: 2.5rem !important; 
-                            padding-bottom: 2.5rem !important; 
-                            margin: 0 1rem;
-                            background: rgba(0,0,0,0.75) !important;
-                            border: 1px solid rgba(255,255,255,0.1);
-                        }
-                        #hero .slide .inner-content h1 { font-size: 1.9rem; margin-bottom: 0.75rem; }
-                        #hero .slide .inner-content h2 { font-size: 1.05rem; margin-bottom: 1.5rem; }
-                        #hero .flag-swiper .swiper-button-next,
-                        #hero .flag-swiper .swiper-button-prev { display: none; }
-                        #hero .hero-play-pause { bottom: 20px; button { width: 40px; height: 40px; } }
-                        #hero .btn { width: 100%; display: block; font-size: 1rem !important; }
-                    }
-                `}} />
+                /* Peak Professional Light Hero */
+                .hero-section {
+                    position: relative;
+                    overflow: hidden; 
+                    width: 100%;
+                    background-color: #ffffff;
+                    background-image: radial-gradient(circle at 10% 20%, rgba(0, 171, 132, 0.04), transparent 40%),
+                                      radial-gradient(circle at 90% 80%, rgba(0, 98, 155, 0.03), transparent 40%);
+                }
+                
+                /* Subtle engineering grid background */
+                .hero-grid {
+                    position: absolute;
+                    inset: 0;
+                    background-size: 40px 40px;
+                    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+                                      linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+                    z-index: 0;
+                }
 
-                {/* Swiper Hero Slides */}
-                <div className="swiper flag-swiper h-100" style={{ width: '100%', minHeight: '100svh' }}>
-                    <div className="swiper-wrapper h-100">
-                        {/* Slide 1 */}
-                        <div className="swiper-slide h-100">
-                            <div className="slide h-100 w-100" style={{ backgroundImage: 'url(https://cmte.ieee.org/pes-template/wp-content/uploads/sites/78/2019/12/shutterstock_773069344-slide.jpg)' }}>
-                                <div className="container h-100 text-center text-lg-start">
-                                    <div className="row h-100 align-items-center">
-                                        {/* Empty left column for template accuracy */}
-                                        <div className="d-none d-lg-block col-lg-6"></div>
-                                        <div className="col-12 col-md-10 mx-auto mx-lg-0 col-lg-6">
-                                            <div className="inner-content py-5 px-3 px-lg-5" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)' }}>
-                                                <h1 className="mb-3">Join the Award-Winning IEEE PES Boston Chapter</h1>
-                                                <h2 className="mb-4">Network with over 500 engineering professionals in the Boston metro area</h2>
-                                                <a href="/membership" className="btn btn-lg text-uppercase fw-bold px-4 py-3" style={{ backgroundColor: 'var(--pes-green)', color: 'white', border: 'none', borderRadius: 0, fontSize: '0.9rem', letterSpacing: '1px' }}>Learn More</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {/* Slide 2 */}
-                        <div className="swiper-slide h-100">
-                            <div className="slide h-100 w-100" style={{ backgroundImage: 'url(https://cmte.ieee.org/pes-template/wp-content/uploads/sites/78/2019/12/shutterstock_681206938-slider.jpg)', backgroundPosition: 'center' }}>
-                                <div className="container h-100 text-center text-lg-start">
-                                    <div className="row h-100 align-items-center">
-                                        <div className="col-12 col-md-10 mx-auto mx-lg-0 col-lg-6">
-                                            <div className="inner-content py-5 px-3 px-lg-5" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)' }}>
-                                                <h1 className="mb-3">Get Involved</h1>
-                                                <h2 className="mb-4">Come to Our Next Meeting: January 21st, 2020</h2>
-                                                <a href="/events" className="btn btn-lg text-uppercase fw-bold px-4 py-3" style={{ backgroundColor: 'var(--pes-green)', color: 'white', border: 'none', borderRadius: 0, fontSize: '0.9rem', letterSpacing: '1px' }}>See Calendar</a>
-                                            </div>
-                                        </div>
-                                        <div className="d-none d-lg-block col-lg-6"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {/* Swiper Nav */}
-                    <div className="swiper-button-prev"></div>
-                    <div className="swiper-button-next"></div>
-                </div>
+                .hero-image-container {
+                    border: 1px solid rgba(0, 0, 0, 0.05);
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+                }
 
-                {/* Play / Pause */}
-                <div className="hero-play-pause">
-                    <button className="hero-play-btn" title="Play slideshow">
-                        <i className="ri-play-fill ms-1"></i>
-                    </button>
-                    <button className="hero-pause-btn" title="Pause slideshow">
-                        <i className="ri-pause-fill"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div className="container pt-5">
-                <div className="vc_row-full-width vc_clearfix"></div>
-                <div className="vc_row wpb_row vc_row-fluid vc_custom_1564497980118 mt-5 mb-5">
-                    <div className="wpb_column vc_column_container vc_col-sm-12">
-                        <div className="vc_column-inner">
-                            <div className="wpb_wrapper">
-                                <div className="wpb_text_column wpb_content_element">
-                                    <div className="wpb_wrapper">
-                                        <p style={{ textAlign: "justify", fontSize: "1.1rem" }}>The <strong>Boston Chapter of the Power and Energy Society</strong> consists of roughly 500 members including power engineering professionals, students, and associates in and around the Boston area. Our chapter provides high quality technical meetings and technical courses to our members and non-members alike. Some of the topics that have been covered recently in our technical meetings include Grid Modernization, Energy Markets, Substation Automation and Arc Flash Safety. We also offer CEU/PDH accredited courses for continuing education in topics such as Energy Storage, Microgrids, Distributed Generation, Symmetrical Components, Equipment Testing and Commissioning, and Distribution and Substation Engineering.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="vc_row wpb_row vc_row-fluid row mb-5 mt-5 pt-4 align-items-stretch">
-                    <div className="wpb_column vc_column_container vc_col-sm-12 col-md-6 mb-4 mb-md-0">
-                        <div className="vc_column-inner h-100">
-                            <div className="wpb_wrapper p-5 rounded border bg-white shadow-sm h-100" style={{ borderTop: "4px solid var(--pes-green) !important" }}>
-                                <h4 className="mb-4 fw-bold">Recent Posts &amp; Updates</h4>
-                                <div className="posts">
-                                    <ul className="list-unstyled">
-                                        <li className="mb-4 pb-3 border-bottom">
-                                            <small className="text-secondary fw-bold text-uppercase">December 15, 2025</small>
-                                            <h5 className="fw-bold mt-1"><a href="#" className="text-dark text-decoration-none">Annual General Meeting 2025 Successfully Concludes</a></h5>
-                                            <p className="text-muted small mb-2">Our year-end meeting brought together top professionals to discuss grid modernization.</p>
-                                            <a href="#" className="text-success small fw-bold text-decoration-none">Read More &rarr;</a>
-                                        </li>
-                                        <li className="mb-4 pb-3 border-bottom">
-                                            <small className="text-secondary fw-bold text-uppercase">November 2, 2025</small>
-                                            <h5 className="fw-bold mt-1"><a href="#" className="text-dark text-decoration-none">New Student Chapter Inaugurated at Local University</a></h5>
-                                            <p className="text-muted small mb-2">Excited to welcome the newest technical student branch into the PES family.</p>
-                                            <a href="#" className="text-success small fw-bold text-decoration-none">Read More &rarr;</a>
-                                        </li>
-                                        <li>
-                                            <small className="text-secondary fw-bold text-uppercase">October 18, 2025</small>
-                                            <h5 className="fw-bold mt-1"><a href="#" className="text-dark text-decoration-none">Call for Papers: 2026 Transmission Conference</a></h5>
-                                            <p className="text-muted small mb-2">Submit your abstracts for the upcoming regional conference.</p>
-                                            <a href="#" className="text-success small fw-bold text-decoration-none">Read More &rarr;</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                @media (max-width: 768px) {
+                    .hero-section {
+                        min-height: auto !important;
+                        padding-top: 5rem !important; 
+                        padding-bottom: 5rem !important;
+                    }
                     
-                    <div className="wpb_column vc_column_container vc_col-sm-12 col-md-6">
-                        <div className="vc_column-inner h-100 rounded overflow-hidden shadow-sm d-flex flex-column justify-content-center" style={{ backgroundImage: 'url(https://cmte.ieee.org/pes-template/wp-content/uploads/sites/78/2019/12/shutterstock_1033701589-slice.jpg)', backgroundPosition: 'center center', backgroundSize: 'cover', position: 'relative' }}>
-                            <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)' }}></div>
-                            <div className="wpb_wrapper text-center w-100 position-relative z-index-2 px-4 py-5 h-100 d-flex align-items-center justify-content-center">
-                                <a className="btn btn-primary btn-block btn-lg shadow fs-4 fw-bold p-4 w-100 d-flex align-items-center justify-content-center" href="#" title="Stay Up To Date: Join Our Mailing List" style={{ whiteSpace: 'normal', borderRadius: '0', backgroundColor: 'var(--pes-green)', border: 'none', minHeight: '120px' }}>Stay Up To Date:<br />Join Our Mailing List</a>
+                    .hero-section h1 { font-size: 2.5rem !important; }
+                    .hero-section .lead { font-size: 1.05rem !important; }
+                    .hero-section .btn { width: 100%; display: block; text-align: center; }
+                    
+                    .stats-container {
+                        flex-direction: column !important;
+                        align-items: flex-start !important;
+                        gap: 1.5rem !important;
+                    }
+                    .stats-divider { display: none; }
+                }
+
+                .hero-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 10px 25px rgba(0, 171, 132, 0.3) !important;
+                }
+                
+                .hero-btn-outline {
+                    border: 2px solid rgba(0, 0, 0, 0.1) !important;
+                    color: #1a202c !important;
+                    background: rgba(255, 255, 255, 0.8) !important;
+                    backdrop-filter: blur(10px);
+                }
+
+                .hero-btn-outline:hover {
+                    transform: translateY(-2px);
+                    border-color: rgba(0, 0, 0, 0.2) !important;
+                    background: #f8fafc !important;
+                }
+
+                /* Marquee & Gallery */
+                .marquee-container {
+                    animation: scroll-left 50s linear infinite;
+                    display: flex;
+                    width: max-content;
+                }
+                .marquee-container:hover { animation-play-state: paused; }
+                
+                @keyframes scroll-left {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-50%); }
+                }
+
+                .gallery-card { transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; }
+                .gallery-card:hover {
+                    transform: translateY(-10px);
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.15) !important;
+                }
+                .gallery-img { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+                .gallery-card:hover .gallery-img { transform: scale(1.1); }
+
+                /* Event Cards */
+                .event-card-hover {
+                    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+                    border: 1px solid rgba(0,0,0,0.05) !important;
+                }
+                .event-card-hover:hover {
+                    transform: translateY(-8px);
+                    box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+                }
+                .event-card-img { transition: transform 0.5s ease; }
+                .event-card-hover:hover .event-card-img { transform: scale(1.05); }
+
+                /* Preview Modal */
+                .gallery-preview-modal {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0, 0, 0, 0.95); display: none; align-items: center;
+                    justify-content: center; z-index: 9999; backdrop-filter: blur(10px);
+                }
+                .gallery-preview-modal.active { display: flex; }
+                .gallery-preview-content { position: relative; max-width: 90%; max-height: 90%; }
+                .gallery-preview-content img { max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: 8px; }
+                .gallery-preview-close {
+                    position: absolute; top: -40px; right: 0; color: white;
+                    font-size: 2rem; cursor: pointer; transition: transform 0.3s ease;
+                }
+                .gallery-preview-close:hover { transform: scale(1.2); }
+                .preview-timer-container {
+                    position: absolute; bottom: -30px; left: 0; width: 100%;
+                    height: 4px; background: rgba(255, 255, 255, 0.2); border-radius: 2px; overflow: hidden;
+                }
+                .preview-timer-bar { height: 100%; background: var(--pes-green); width: 100%; }
+
+                @keyframes float {
+                    0%, 100% { transform: translateY(0px); }
+                    50% { transform: translateY(-15px); }
+                }
+                .floating-badge { animation: float 4s ease-in-out infinite; }
+            `}</style>
+
+            <div className="box-layout">
+                <Navbar />
+
+                {/* Peak Professional Light Hero Section */}
+                <div id="hero" className="hero-section d-flex align-items-center" style={{ minHeight: '85vh' }}>
+                    <div className="hero-grid"></div>
+
+                    <div className="container position-relative py-5" style={{ zIndex: 2 }}>
+                        <div className="row align-items-center g-5 pt-lg-5">
+                            <div className="col-lg-7" data-aos="fade-right" data-aos-duration="1000">
+                                <div className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-4" style={{ background: 'rgba(255,255,255,0.8)', border: '1px solid rgba(0,0,0,0.08)', backdropFilter: 'blur(10px)', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
+                                    <span className="badge rounded-pill px-3 py-2 text-uppercase fw-bold text-white" style={{ backgroundColor: 'var(--pes-green) !important', letterSpacing: '0.5px', fontSize: '0.7rem' }}>Award Winning Chapter</span>
+                                    <span className="text-secondary fw-semibold d-none d-sm-inline" style={{ fontSize: '0.9rem' }}>Founded 1999</span>
+                                </div>
+
+                                <h1 className="fw-bolder display-3 mb-4" style={{ letterSpacing: '-1px', lineHeight: '1.2', color: '#0f172a' }}>
+                                    Powering Kerala's <br className="d-none d-md-block" />
+                                    <span className="pb-1 d-inline-block position-relative" style={{ background: 'linear-gradient(90deg, #00ab84, #0077b5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                                        Energy Future
+                                    </span>
+                                </h1>
+
+                                <p className="lead mb-4 text-secondary" style={{ fontSize: '1.15rem', lineHeight: '1.6', maxWidth: '580px' }}>
+                                    Join India's premier IEEE PES chapter with <strong style={{ color: '#0f172a' }}>1,200+ members</strong>, <strong style={{ color: '#0f172a' }}>50+ student branches</strong>, and a legacy of excellence in electric power and energy innovation.
+                                </p>
+
+                                <div className="d-flex flex-wrap gap-3 mb-5">
+                                    <Link href="/membership" className="btn btn-lg rounded-pill text-white px-5 py-3 fw-bold hero-btn shadow" style={{ backgroundColor: 'var(--pes-green)' }}>
+                                        Become a Member
+                                        <i className="ri-arrow-right-line ms-2"></i>
+                                    </Link>
+                                    <Link href="/events" className="btn btn-lg rounded-pill px-5 py-3 fw-bold hero-btn-outline">
+                                        Explore Events
+                                    </Link>
+                                </div>
+
+                                <div className="d-flex flex-wrap gap-4 align-items-center border-top pt-4 stats-container" style={{ borderColor: 'rgba(0,0,0,0.08) !important' }}>
+                                    <div>
+                                        <h3 className="fw-bold fs-2 mb-0" style={{ color: '#0f172a' }}>1,200+</h3>
+                                        <p className="small mb-0 text-uppercase fw-semibold text-muted" style={{ letterSpacing: '0.5px' }}>Members</p>
+                                    </div>
+                                    <div className="stats-divider" style={{ width: '1px', height: '40px', backgroundColor: 'rgba(0,0,0,0.1)' }}></div>
+                                    <div>
+                                        <h3 className="fw-bold fs-2 mb-0" style={{ color: '#0f172a' }}>50+</h3>
+                                        <p className="small mb-0 text-uppercase fw-semibold text-muted" style={{ letterSpacing: '0.5px' }}>Student Branches</p>
+                                    </div>
+                                    <div className="stats-divider" style={{ width: '1px', height: '40px', backgroundColor: 'rgba(0,0,0,0.1)' }}></div>
+                                    <div>
+                                        <h3 className="fw-bold fs-2 mb-0" style={{ color: '#0f172a' }}>#1</h3>
+                                        <p className="small mb-0 text-uppercase fw-semibold text-muted" style={{ letterSpacing: '0.5px' }}>Global Ranking</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="col-lg-5 d-none d-lg-block" data-aos="fade-left" data-aos-duration="1200" data-aos-delay="200">
+                                <div className="position-relative mt-4">
+                                    {/* Offset Decorative Border */}
+                                    <div className="position-absolute rounded-4" style={{ top: '25px', left: '-25px', right: '25px', bottom: '-25px', border: '1px solid rgba(0,171,132,0.3)', zIndex: 0 }}></div>
+
+                                    <div className="rounded-4 overflow-hidden position-relative hero-image-container bg-white" style={{ zIndex: 1 }}>
+                                        <img
+                                            src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                                            alt="IEEE PES Kerala Chapter Engineering"
+                                            className="w-100 object-fit-cover"
+                                            style={{ height: '520px' }}
+                                        />
+                                        
+                                        {/* Image Gradient Light Overlay for depth */}
+                                        <div className="position-absolute inset-0 w-100 h-100" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 40%)', top: 0, left: 0 }}></div>
+
+                                        <div className="position-absolute bottom-0 start-0 m-4 p-3 rounded-3 shadow-lg floating-badge d-flex align-items-center gap-3" style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', border: '1px solid rgba(0,0,0,0.05)', maxWidth: '280px' }}>
+                                            <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '55px', height: '55px' }}>
+                                                <i className="ri-trophy-line fs-2" style={{ color: 'var(--pes-green)' }}></i>
+                                            </div>
+                                            <div>
+                                                <h6 className="mb-1 fw-bold fs-6" style={{ letterSpacing: '0.3px', color: '#0f172a' }}>Outstanding Chapter</h6>
+                                                <p className="mb-0 small text-muted">IEEE PES Award</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div id="spotlight" className="vc_row wpb_row vc_row-fluid split-screen mt-5 mb-5 container mx-auto">
-                <div className="row w-100 m-0">
-                    <div className="split-screen-content left wpb_column vc_column_container vc_col-sm-6 col-md-6 pe-md-5">
-                        <div className="vc_column-inner">
-                            <div className="wpb_wrapper">
-                                <h2 style={{ textAlign: "left" }} className="vc_custom_heading vc_do_custom_heading section-title mb-4 fw-bold">In the Spotlight</h2>
-
-                                <h3 style={{ color: "#111111", textAlign: "left" }} className="vc_custom_heading vc_do_custom_heading h4 mt-0 fw-bold">What to Watch in AI Delivery, Medical Device Cybersecurity and Digital Therapeutics</h3>
-                                <div className="wpb_text_column wpb_content_element mb-4">
-                                    <div className="wpb_wrapper text-muted">
-                                        <p><span style={{ fontWeight: 400 }}>As 2026 moves ahead, the Global Healthcare &amp; Life Sciences Practice of the IEEE Standards Association has identified three trends that stand out for their impact on the delivery and security of care as well as the evolving ecosystem of medical-grade digital therapeutics.</span></p>
-                                        <p><a className="arrow-link fw-bold text-success text-decoration-none" href="https://standards.ieee.org/beyond-standards/2026-healthcare-and-life-sciences-trends-what-to-watch-in-ai-delivery-medical-device-cybersecurity-and-digital-therapeutics/" rel="noopener">2026 Healthcare and Life Sciences Trends &rarr;</a></p>
-                                    </div>
-                                </div>
-
-                                <div className="vc_separator wpb_content_element vc_separator_align_center vc_sep_width_100 vc_sep_pos_align_center vc_separator_no_text mt-4 mb-4">
-                                    <hr style={{ borderColor: '#d9d9d6', borderWidth: '2px', opacity: 0.5 }} />
-                                </div>
-
-                                <h3 style={{ textAlign: "left", color: "#111111" }} className="vc_custom_heading vc_do_custom_heading h4 mt-0 fw-bold">Age-Appropriate Design and Child Digital Well-Being</h3>
-                                <div className="wpb_text_column wpb_content_element mb-4">
-                                    <div className="wpb_wrapper text-muted">
-                                        <p>IEEE SA, with UNICEF and the Greek Ministry of Digital Governance, hosted a <a href="https://publicadministration.desa.un.org/wsis20">UN WSIS+20</a> High-Level Meeting <a href="#">Side Event</a> on Designing Responsibly, focusing on age-appropriate standards in the Digital Era.</p>
-                                        <p><a className="arrow-link fw-bold text-success text-decoration-none" href="https://standards.ieee.org/beyond-standards/ge-appropriate-design-and-child-digital-well-being/">Key Takeaways from the WSIS+20 Side Event &rarr;</a></p>
-                                    </div>
-                                </div>
-
-                                <div className="vc_separator wpb_content_element vc_separator_align_center vc_sep_width_100 vc_sep_pos_align_center vc_separator_no_text mt-4 mb-4">
-                                    <hr style={{ borderColor: '#d9d9d6', borderWidth: '2px', opacity: 0.5 }} />
-                                </div>
-
-                                <h3 style={{ textAlign: "left", color: "#111111" }} className="vc_custom_heading vc_do_custom_heading h4 mt-0 fw-bold">Share Your Idea to Strengthen Trust in AI</h3>
-                                <div className="wpb_text_column wpb_content_element mb-4">
-                                    <div className="wpb_wrapper text-muted">
-                                        <p>IEEE SA joined the Global Trust Challenge to help move ideas about trustworthy AI into real-world testing and implementation. Individuals and teams are invited to submit proposals and explore ideas with expert guidance, prototyping, and live pilots.</p>
-                                        <p><a className="arrow-link fw-bold text-success text-decoration-none" href="http://www.globalchallenge.ai/" target="_blank" rel="noopener noreferrer">Learn More or Submit a Proposal &rarr;</a></p>
-                                    </div>
-                                </div>
+                {/* About Message Section */}
+                <div className="container py-5 mt-4">
+                    <div className="row">
+                        <div className="col-12">
+                            <div className="py-2" data-aos="fade-up">
+                                <p style={{ textAlign: "justify", fontSize: "1.1rem", lineHeight: "1.8", color: '#444' }}>
+                                    The <strong>IEEE PES Kerala Chapter</strong> was founded in 1999 with just 12 members and has since grown into one of the most recognized chapters in the world. It won the Outstanding Chapter Award in 2012 and the PES Membership Growth Award in 2013, and claimed first place in the IEEE PES Chapters Website Contest the same year. Membership surpassed 1,200 by 2017, elevating it to large chapter status. Its mission is to be the leading provider of scientific and engineering knowledge on electric power and energy for the betterment of society. With 50+ Student Branch Chapters and numerous technical events, it remains a highly active and award-winning chapter under the IEEE Kerala Section.
+                                </p>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div className="right wpb_column vc_column_container vc_col-sm-6 col-md-6 vc_col-has-fill rounded overflow-hidden shadow-lg p-0" style={{ position: 'relative', backgroundColor: 'var(--pes-green)' }}>
-                        <div className="position-absolute top-0 end-0 bg-dark text-white px-3 py-1 m-3 rounded shadow" style={{ fontSize: '0.85rem', zIndex: 10, opacity: 0.9 }}>
-                            <i className="ri-calendar-event-line me-2"></i>Upcoming Events
+                {/* Vision & Mission Section */}
+                <div className="container pb-5">
+                    <div className="row g-4 pt-3">
+                        <div className="col-md-6" data-aos="fade-up" data-aos-delay="100">
+                            <div className="p-4 p-md-5 rounded-4 border bg-white shadow-sm h-100 position-relative mt-4" style={{ transition: 'transform 0.3s ease', cursor: 'default' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                                <div className="position-absolute top-0 start-0 translate-middle ms-5 bg-white p-2 rounded-circle shadow-sm" style={{ marginTop: '-4px' }}>
+                                    <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
+                                        <i className="ri-eye-line fs-3" style={{ color: 'var(--pes-green)' }}></i>
+                                    </div>
+                                </div>
+                                <h3 className="fw-bold mt-3 mb-3" style={{ color: '#0f172a' }}>Our Vision</h3>
+                                <p className="text-secondary mb-0" style={{ lineHeight: '1.7' }}>
+                                    To be the leading provider of scientific and engineering information on electric power and energy for the betterment of society, and the preferred professional development source for our members.
+                                </p>
+                            </div>
                         </div>
-                        <div className="swiper upcoming-events-swiper h-100 w-100 position-relative">
-                            <div className="swiper-wrapper h-100">
-                                {upcoming.length > 0 ? (
-                                    upcoming.map((evt, idx) => (
-                                        <div className="swiper-slide h-100 text-bg-dark" key={idx}>
-                                            <div className="vc_column-inner h-100 p-0">
-                                                <div className="wpb_wrapper h-100 d-flex flex-column">
-                                                    <div className="wpb_single_image wpb_content_element vc_align_center mb-0" style={{ height: '350px', overflow: 'hidden' }}>
-                                                        <figure className="wpb_wrapper vc_figure m-0 h-100">
-                                                            <div className="vc_single_image-wrapper vc_box_border_grey h-100">
-                                                                <Image src={evt.imageUrl || "/images/ieee-images/Events/pesgre_event.png"} alt={evt.title} width={1920} height={1080} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div className="col-md-6" data-aos="fade-up" data-aos-delay="200">
+                            <div className="p-4 p-md-5 rounded-4 border bg-white shadow-sm h-100 position-relative mt-4" style={{ transition: 'transform 0.3s ease', cursor: 'default' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                                <div className="position-absolute top-0 start-0 translate-middle ms-5 bg-white p-2 rounded-circle shadow-sm" style={{ marginTop: '-4px' }}>
+                                    <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
+                                        <i className="ri-rocket-2-line fs-3 text-primary"></i>
+                                    </div>
+                                </div>
+                                <h3 className="fw-bold mt-3 mb-3" style={{ color: '#0f172a' }}>Our Mission</h3>
+                                <p className="text-secondary mb-0" style={{ lineHeight: '1.7' }}>
+                                    To foster technological innovation and excellence for the benefit of humanity by providing high-quality publications, engaging conferences, and valuable educational programs in power and energy.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                {/* Announcements & Upcoming Events Section */}
+                <div className="container my-5">
+                    <div className="row align-items-stretch g-4">
+                        {/* Announcements */}
+                        <div className="col-lg-6" data-aos="fade-up">
+                            <div className="p-4 p-md-5 rounded border bg-white shadow-sm h-100" style={{ borderTop: "4px solid var(--pes-green)" }}>
+                                <h4 className="mb-4 fw-bold d-flex align-items-center gap-2">
+                                    <i className="ri-megaphone-line text-success"></i>
+                                    Announcements
+                                </h4>
+                                <ul className="list-unstyled">
+                                    {displayAnnouncements.slice(0, 3).map((ann, idx) => (
+                                        <li className={`mb-4 pb-3 ${idx < 2 ? 'border-bottom' : ''}`} key={idx}>
+                                            <small className="text-secondary fw-bold text-uppercase d-block mb-2">
+                                                {isNaN(Date.parse(ann.date)) ? ann.date : new Date(ann.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                            </small>
+                                            <h5 className="fw-bold mt-1 mb-2">
+                                                <Link href={ann.link || "#"} className="text-dark text-decoration-none hover-green">
+                                                    {ann.title}
+                                                </Link>
+                                            </h5>
+                                            <p className="text-muted small mb-2">{ann.description || ann.details}</p>
+                                            <Link href={ann.link || "#"} className="text-success small fw-bold text-decoration-none">
+                                                Read More →
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Upcoming Events Carousel */}
+                        <div className="col-lg-6" data-aos="fade-up" data-aos-delay="100">
+                            <div className="rounded overflow-hidden shadow-lg position-relative h-100" style={{ backgroundColor: 'var(--pes-green)', minHeight: '450px' }}>
+                                <div className="position-absolute top-0 end-0 bg-dark text-white px-3 py-2 m-3 rounded shadow" style={{ fontSize: '0.85rem', zIndex: 10 }}>
+                                    <i className="ri-calendar-event-line me-2"></i>Upcoming Events
+                                </div>
+
+                                <div className="swiper upcoming-events-swiper h-100 w-100">
+                                    <div className="swiper-wrapper h-100">
+                                        {upcoming.length > 0 ? (
+                                            upcoming.map((evt, idx) => (
+                                                <div className="swiper-slide h-100" key={idx}>
+                                                    <div className="h-100 d-flex flex-column bg-white">
+                                                        <div style={{ height: '260px', overflow: 'hidden' }}>
+                                                            <img
+                                                                src={evt.imageUrl || "/images/ieee-images/Events/pesgre_event.png"}
+                                                                alt={evt.title}
+                                                                className="w-100 h-100 object-fit-cover"
+                                                            />
+                                                        </div>
+                                                        <div className="p-4 d-flex flex-column justify-content-center flex-grow-1">
+                                                            <div className="mb-2">
+                                                                <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: 'var(--pes-green)', fontSize: '0.75rem' }}>
+                                                                    {new Date(evt.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                                </span>
                                                             </div>
-                                                        </figure>
-                                                    </div>
-                                                    <div className="p-4 p-md-5 d-flex flex-column justify-content-center flex-grow-1 text-white bg-transparent">
-                                                        <h3 style={{ textAlign: "left", color: "white" }} className="vc_custom_heading vc_do_custom_heading h3 text-white mt-0 mb-3 fw-bold">
-                                                            {evt.title}
-                                                        </h3>
-                                                        <div className="wpb_text_column wpb_content_element mb-4 text-white" style={{ opacity: 0.9 }}>
-                                                            <div className="wpb_wrapper">
-                                                                <p className="text-white">{evt.description || evt.details || "Join us for our next featured event."}</p>
-                                                                <p className="mt-4"><a className="arrow-link text-white fw-bold text-decoration-none border-bottom pb-1" href={evt.link || evt.url || "#"} target="_blank" rel="noopener noreferrer"><span className="arrow-icon">Learn More &rarr;</span></a></p>
-                                                            </div>
+                                                            <h3 className="h5 fw-bold mb-2 text-dark">{evt.title}</h3>
+                                                            <p className="text-muted mb-3" style={{ fontSize: '0.9rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                                                {evt.description || evt.details || "Join us for this exciting event."}
+                                                            </p>
+                                                            <Link
+                                                                href={evt.link || evt.url || "#"}
+                                                                className="fw-bold text-decoration-none mt-auto d-inline-block"
+                                                                style={{ color: 'var(--pes-green)' }}
+                                                            >
+                                                                Learn More →
+                                                            </Link>
                                                         </div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="swiper-slide h-100">
+                                                <div className="h-100 d-flex flex-column bg-white">
+                                                    <div style={{ height: '260px', overflow: 'hidden' }}>
+                                                        <img
+                                                            src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
+                                                            alt="Upcoming Event"
+                                                            className="w-100 h-100 object-fit-cover"
+                                                        />
+                                                    </div>
+                                                    <div className="p-4 d-flex flex-column justify-content-center flex-grow-1">
+                                                        <div className="mb-2">
+                                                            <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: 'var(--pes-green)', fontSize: '0.75rem' }}>Coming Soon</span>
+                                                        </div>
+                                                        <h3 className="h5 fw-bold mb-2 text-dark">Smart Grid Symposium 2026</h3>
+                                                        <p className="text-muted mb-3" style={{ fontSize: '0.9rem' }}>
+                                                            Join industry experts for an in-depth exploration of cutting-edge smart grid technologies.
+                                                        </p>
+                                                        <Link href="/events" className="fw-bold text-decoration-none mt-auto d-inline-block" style={{ color: 'var(--pes-green)' }}>
+                                                            Learn More →
+                                                        </Link>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <div className="swiper-slide h-100">
-                                        <div className="vc_column-inner h-100 p-0">
-                                            <div className="wpb_wrapper h-100 d-flex flex-column">
-                                                <div className="wpb_single_image wpb_content_element vc_align_center mb-0" style={{ height: '350px', overflow: 'hidden' }}>
-                                                    <figure className="wpb_wrapper vc_figure m-0 h-100">
-                                                        <div className="vc_single_image-wrapper vc_box_border_grey h-100">
-                                                            <img src="https://standards.ieee.org/wp-content/uploads/2026/03/Childrens-Data_Tablets_1920x1080.jpg" alt="Events" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                        </div>
-                                                    </figure>
-                                                </div>
-                                                <div className="p-4 p-md-5 d-flex flex-column justify-content-center flex-grow-1 text-white">
-                                                    <h3 style={{ textAlign: "left", color: "white" }} className="vc_custom_heading vc_do_custom_heading h3 text-white mt-0 mb-3 fw-bold">
-                                                        Enabling Trustworthy Digital Experiences for Children
-                                                    </h3>
-                                                    <div className="wpb_text_column wpb_content_element mb-4 text-white" style={{ opacity: 0.9 }}>
-                                                        <div className="wpb_wrapper">
-                                                            <p>Today, one in three people online is under the age of 18, but the original design of most digital technologies did not anticipate the use of those technologies by children. Therefore, there is an urgent need to address the vulnerabilities...</p>
-                                                            <p className="mt-4"><a className="arrow-link text-white fw-bold text-decoration-none border-bottom pb-1" href="https://standards.ieee.org/" target="_blank" rel="noopener noreferrer"><span className="arrow-icon">Learn More &rarr;</span></a></p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        )}
                                     </div>
-                                )}
+                                    <div className="upcoming-swiper-pagination swiper-pagination position-absolute w-100" style={{ bottom: '15px' }}></div>
+                                </div>
                             </div>
-                            <div className="upcoming-swiper-pagination swiper-pagination position-absolute w-100" style={{ bottom: '15px' }}></div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Old Stay Up To Date full-width banner was removed and integrated above */}
-
-            {/* Latest Videos Gallery */}
-            <section className="latest-videos-section position-relative" style={{ padding: '80px 0', background: 'linear-gradient(to bottom, #fcfcfc, #ffffff)', overflow: 'hidden' }}>
-                <style dangerouslySetInnerHTML={{
-                    __html: `
-                        .marquee-container {
-                            animation: scroll-left 40s linear infinite;
-                            display: flex;
-                            width: max-content;
-                        }
-                        .marquee-container:hover {
-                            animation-play-state: paused;
-                        }
-                        @keyframes scroll-left {
-                            0% { transform: translateX(0); }
-                            100% { transform: translateX(calc(-50%)); }
-                        }
-                        .video-card:hover .video-img { transform: scale(1.05); }
-                        .video-card:hover .play-overlay { opacity: 1 !important; }
-                        .video-card:hover .video-title { color: var(--pes-green) !important; }
-                    `}} />
-                <div className="container">
-                    <div className="text-center mb-5 pb-3">
-                        <h2 className="fw-bold fs-1 text-dark mb-3">Latest <span style={{ color: 'var(--pes-green)' }}>Videos</span></h2>
-                        <p className="text-muted mx-auto" style={{ maxWidth: '600px', fontSize: '1.1rem' }}>Check out the newest tutorials, player reviews, and gameplay tips</p>
+                {/* Recent Events Section */}
+                <div className="container my-5 py-5 bg-light rounded-4">
+                    <div className="text-center mb-5" data-aos="fade-up">
+                        <h2 className="fw-bold fs-1 text-dark mb-3">
+                            Recent <span style={{ color: 'var(--pes-green)' }}>Events</span>
+                        </h2>
+                        <p className="text-muted mx-auto" style={{ maxWidth: '600px', fontSize: '1.1rem' }}>
+                            Explore our latest workshops, seminars, and networking events
+                        </p>
                     </div>
-                </div>
 
-                <div className="position-relative">
-                    <div className="position-absolute top-0 start-0 z-3" style={{ width: '120px', height: '100%', background: 'linear-gradient(to right, #fcfcfc, transparent)', pointerEvents: 'none', zIndex: 10 }}></div>
-                    <div className="position-absolute top-0 end-0 z-3" style={{ width: '120px', height: '100%', background: 'linear-gradient(to left, #ffffff, transparent)', pointerEvents: 'none', zIndex: 10 }}></div>
-
-                    <div className="overflow-hidden">
-                        <div className="marquee-container" style={{ gap: '24px', paddingRight: '24px' }}>
-                            {[...galleryVideos, ...galleryVideos].map((video, idx) => (
-                                <a key={idx} href={video.url} target="_blank" rel="noopener noreferrer" className="video-card flex-shrink-0 text-decoration-none" style={{ width: '340px', cursor: 'pointer' }}>
-                                    <div className="video-thumbnail position-relative rounded-4 overflow-hidden mb-3 shadow-sm border border-light" style={{ aspectRatio: '16/9' }}>
-                                        <img src={video.img} alt="Video" className="w-100 h-100 object-fit-cover video-img" style={{ transition: 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)' }} />
-                                        <div className="play-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style={{ background: 'rgba(0,0,0,0.4)', opacity: 0, transition: 'opacity 0.3s' }}>
-                                            <div className="play-btn rounded-circle d-flex align-items-center justify-content-center shadow-lg" style={{ width: '64px', height: '64px', background: 'linear-gradient(135deg, #e52d27 0%, #b31217 100%)' }}>
-                                                <i className="ri-play-fill text-white fs-1 ms-1"></i>
-                                            </div>
+                    <div className="swiper recent-events-swiper pb-5 position-relative px-2">
+                        <div className="swiper-wrapper">
+                            {(recent.length > 0 ? recent : [
+                                { title: "Workshop on Renewable Energy Systems", img: "https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", date: "2026-03-18", desc: "Comprehensive training on solar and wind energy integration." },
+                                { title: "Power Electronics Seminar", img: "https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", date: "2026-03-15", desc: "Advanced topics in power conversion and control systems." },
+                                { title: "Student Chapter Technical Meet", img: "https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", date: "2026-03-12", desc: "Networking event for student members across Kerala." },
+                                { title: "Industry Expert Talk Series", img: "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", date: "2026-03-08", desc: "Insights from leading professionals in the power sector." }
+                            ]).map((event, idx) => (
+                                <div className="swiper-slide h-auto" key={idx}>
+                                    <Link href={event.link || event.url || "#"} className="card h-100 border-0 text-decoration-none event-card-hover" style={{ borderRadius: '12px', overflow: 'hidden' }}>
+                                        <div style={{ height: '200px', overflow: 'hidden' }}>
+                                            <img src={event.img || event.imageUrl || "https://images.unsplash.com/photo-1591115765373-5207764f72e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"} alt={event.title} className="w-100 h-100 object-fit-cover event-card-img" />
                                         </div>
-                                        <div className="duration position-absolute bottom-0 end-0 m-2 px-2 py-1 rounded bg-dark text-white fw-medium" style={{ fontSize: '12px', opacity: 0.85 }}>{video.duration}</div>
-                                    </div>
-                                    <h3 className="fs-6 fw-bold text-dark video-title pe-2" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.5', transition: 'color 0.3s' }}>{video.title}</h3>
-                                    <div className="d-flex align-items-center gap-4 text-secondary mt-2" style={{ fontSize: '13px' }}>
-                                        <span className="d-flex align-items-center gap-1"><i className="ri-eye-line fs-6"></i> {video.views}</span>
-                                        <span className="d-flex align-items-center gap-1"><i className="ri-time-line fs-6"></i> {video.time}</span>
-                                    </div>
-                                </a>
+                                        <div className="card-body p-4 d-flex flex-column bg-white">
+                                            <div className="mb-3">
+                                                <span className="badge bg-light text-dark px-3 py-2" style={{ fontSize: '0.7rem', fontWeight: '600' }}>
+                                                    {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                </span>
+                                            </div>
+                                            <h4 className="card-title fw-bold fs-6 text-dark mb-3" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: '3rem' }}>
+                                                {event.title}
+                                            </h4>
+                                            <p className="card-text text-muted mb-4 flex-grow-1" style={{ fontSize: '0.9rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                                {event.desc || event.description || "Highlights from this impactful IEEE PES event."}
+                                            </p>
+                                            <span className="fw-bold mt-auto d-inline-block small" style={{ color: 'var(--pes-green)' }}>
+                                                View Details →
+                                            </span>
+                                        </div>
+                                    </Link>
+                                </div>
                             ))}
                         </div>
+                        <div className="recent-events-pagination swiper-pagination position-absolute w-100" style={{ bottom: '0px' }}></div>
                     </div>
-                    <p className="text-center text-muted mt-5 mb-0 fw-medium" style={{ fontSize: '14px', opacity: 0.6, letterSpacing: '0.5px' }}>Auto-scrolling - Hover to pause</p>
                 </div>
-            </section>
 
-            <div className="container mb-5 pb-5 mt-5 pt-4">
-                <div className="vc_row wpb_row vc_row-fluid vc_custom_1575574049069" style={{ paddingBottom: '80px' }}>
-                    <div className="wpb_column vc_column_container vc_col-sm-12">
-                        <div className="vc_column-inner">
-                            <div className="wpb_wrapper text-center">
-                                <h3 className="fw-bold" style={{ marginBottom: "40px", display: 'inline-block', padding: '12px 35px', border: '3px solid var(--pes-green)', color: 'var(--pes-green)', fontSize: '1.4rem', textTransform: 'uppercase' }}>IEEE PES Boston Chapter Chairs</h3>
-                                <div className="row mt-5">
-                                    <div className="col-md-4 text-center mb-4">
-                                        <div className="card h-100 border-0 shadow-sm" style={{ borderTop: "6px solid var(--pes-green) !important" }}>
-                                            <div className="card-body p-4 pt-5" style={{ borderTop: '6px solid var(--pes-green)' }}>
-                                                <h4 className="fw-bold mb-1">Subhadarshi Sarkar</h4>
-                                                <p className="text-secondary fw-bold mb-3">Chair</p>
-                                                <p className="text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>Transmission Planning Engineer, National Grid<br />Ph.D IOWA State University<br />B.S Bengal Engineering and Science University, India<br />Member IEEE, PES</p>
-                                                <a href="#" className="mt-3 d-inline-block"><i className="ri-mail-line fs-2 text-success"></i></a>
-                                            </div>
+                {/* Gallery Section */}
+                <section className="gallery-section position-relative py-5 mt-4" style={{ background: 'linear-gradient(to bottom, #f8fafb, #ffffff)' }}>
+                    <div className="container mb-5">
+                        <div className="text-center" data-aos="fade-up">
+                            <h2 className="fw-bold fs-1 text-dark mb-3">
+                                Event <span style={{ color: 'var(--pes-green)' }}>Gallery</span>
+                            </h2>
+                            <p className="text-muted mx-auto" style={{ maxWidth: '600px', fontSize: '1.1rem' }}>
+                                Glimpses from our conferences, workshops, and community gatherings
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="position-relative">
+                        <div className="position-absolute top-0 start-0" style={{ width: '80px', height: '100%', background: 'linear-gradient(to right, #f8fafb, transparent)', pointerEvents: 'none', zIndex: 10 }}></div>
+                        <div className="position-absolute top-0 end-0" style={{ width: '80px', height: '100%', background: 'linear-gradient(to left, #ffffff, transparent)', pointerEvents: 'none', zIndex: 10 }}></div>
+
+                        <div className="overflow-hidden py-3">
+                            <div className="marquee-container" style={{ gap: '24px', paddingRight: '24px' }}>
+                                {[...displayGallery, ...displayGallery].map((item, idx) => (
+                                    <div key={idx} className="gallery-card flex-shrink-0 rounded-4 overflow-hidden shadow-sm border" style={{ width: '320px', backgroundColor: 'white' }}>
+                                        <div style={{ height: '220px', overflow: 'hidden' }}>
+                                            <img src={item.img} alt={item.title} className="w-100 h-100 object-fit-cover gallery-img" />
+                                        </div>
+                                        <div className="p-3 bg-white">
+                                            <h6 className="fw-bold text-dark mb-0 text-truncate" style={{ fontSize: '0.9rem' }}>{item.title}</h6>
                                         </div>
                                     </div>
-                                    <div className="col-md-4 text-center mb-4">
-                                        <div className="card h-100 border-0 shadow-sm" style={{ borderTop: "6px solid var(--pes-green) !important" }}>
-                                            <div className="card-body p-4 pt-5" style={{ borderTop: '6px solid var(--pes-green)' }}>
-                                                <h4 className="fw-bold mb-1">Souresh Mukherjee</h4>
-                                                <p className="text-secondary fw-bold mb-3">Vice-Chair</p>
-                                                <p className="text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>Engineer, Asset Management Distribution and SubTransmission NE, National Grid<br />M.S. Michigan Technological University<br />B.Tech West Bengal University of Technology, India<br />Member IEEE, PES</p>
-                                                <a href="#" className="mt-3 d-inline-block"><i className="ri-mail-line fs-2 text-success"></i></a>
-                                            </div>
+                                ))}
+                            </div>
+                        </div>
+                        <p className="text-center text-muted mt-4 mb-0" style={{ fontSize: '14px', opacity: 0.6 }}>
+                            Click on any image to preview • Auto-scrolling
+                        </p>
+                    </div>
+                </section>
+
+                {/* Office Bearers Section */}
+                <div className="container my-5 py-5">
+                    <div className="text-center mb-5" data-aos="fade-up">
+                        <h3 className="fw-bold d-inline-block px-4 py-3 rounded bg-light" style={{ border: '3px solid var(--pes-green)', color: 'var(--pes-green)', fontSize: '1.2rem', textTransform: 'uppercase' }}>
+                            IEEE PES Kerala Chapter Office Bearers
+                        </h3>
+                    </div>
+
+                    <div className="row mt-5 justify-content-center">
+                        <div className="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="0">
+                            <div className="card h-100 border-0 shadow-sm" style={{ borderTop: "6px solid var(--pes-green)" }}>
+                                <div className="card-body p-4 pt-5 text-center">
+                                    <div className="mb-4">
+                                        <div className="rounded-circle bg-light d-inline-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px' }}>
+                                            <i className="ri-user-star-line fs-1" style={{ color: 'var(--pes-green)' }}></i>
                                         </div>
                                     </div>
-                                    <div className="col-md-4 text-center mb-4">
-                                        <div className="card h-100 border-0 shadow-sm" style={{ borderTop: "6px solid var(--pes-green) !important" }}>
-                                            <div className="card-body p-4 pt-5" style={{ borderTop: '6px solid var(--pes-green)' }}>
-                                                <h4 className="fw-bold mb-1">Babak Enayati</h4>
-                                                <p className="text-secondary fw-bold mb-3">Chair - Emeritus</p>
-                                                <p className="text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>Lead Engineer, Research Development and Demonstration, Utility of the Future, National Grid<br />PhD Clarkson University, MSc Isfahan University of Tech, BSc. Tabriz University<br />Senior Member IEEE, PES, IEEE Standards Committee</p>
-                                                <a href="#" className="mt-3 d-inline-block"><i className="ri-mail-line fs-2 text-success"></i></a>
-                                            </div>
+                                    <h4 className="fw-bold mb-1">Dr. Rajesh Kumar</h4>
+                                    <p className="fw-bold mb-3 small text-uppercase" style={{ color: 'var(--pes-green)', letterSpacing: '1px' }}>Chair</p>
+                                    <p className="text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
+                                        Professor, Dept. of Electrical Engineering<br />
+                                        NIT Calicut<br />
+                                        Senior Member IEEE, PES
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="100">
+                            <div className="card h-100 border-0 shadow-sm" style={{ borderTop: "6px solid var(--pes-green)" }}>
+                                <div className="card-body p-4 pt-5 text-center">
+                                    <div className="mb-4">
+                                        <div className="rounded-circle bg-light d-inline-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px' }}>
+                                            <i className="ri-user-settings-line fs-1" style={{ color: 'var(--pes-green)' }}></i>
                                         </div>
                                     </div>
+                                    <h4 className="fw-bold mb-1">Dr. Priya Menon</h4>
+                                    <p className="fw-bold mb-3 small text-uppercase" style={{ color: 'var(--pes-green)', letterSpacing: '1px' }}>Vice-Chair</p>
+                                    <p className="text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
+                                        Associate Professor<br />
+                                        College of Engineering Trivandrum<br />
+                                        Member IEEE, PES
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="200">
+                            <div className="card h-100 border-0 shadow-sm" style={{ borderTop: "6px solid var(--pes-green)" }}>
+                                <div className="card-body p-4 pt-5 text-center">
+                                    <div className="mb-4">
+                                        <div className="rounded-circle bg-light d-inline-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px' }}>
+                                            <i className="ri-shield-star-line fs-1" style={{ color: 'var(--pes-green)' }}></i>
+                                        </div>
+                                    </div>
+                                    <h4 className="fw-bold mb-1">Dr. Anil Nair</h4>
+                                    <p className="fw-bold mb-3 small text-uppercase" style={{ color: 'var(--pes-green)', letterSpacing: '1px' }}>Secretary</p>
+                                    <p className="text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
+                                        Assistant Professor<br />
+                                        TKM College of Engineering<br />
+                                        Member IEEE, PES
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="vc_row wpb_row vc_row-fluid mt-4">
+                {/* Join IEEE PES CTA Section */}
+                <div className="container py-4 my-3 position-relative" data-aos="fade-up">
+                    <div className="rounded-4 overflow-hidden shadow-lg position-relative p-5 text-center" style={{ background: 'linear-gradient(135deg, #020b14 0%, #001f3f 100%)' }}>
+                        <div className="position-absolute top-0 start-0 w-100 h-100" style={{ 
+                            backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(0, 171, 132, 0.15), transparent 50%), radial-gradient(circle at 80% 50%, rgba(0, 98, 155, 0.15), transparent 50%)',
+                            zIndex: 0
+                        }}></div>
+                        
+                        <div className="position-relative" style={{ zIndex: 1 }}>
+                            <h2 className="display-5 fw-bold text-white mb-3">Elevate Your Engineering Career</h2>
+                            <p className="lead text-white-50 mx-auto mb-4" style={{ maxWidth: '700px' }}>
+                                Join the IEEE Power & Energy Society today to unlock exclusive resources, networking opportunities, and professional development in the energy sector.
+                            </p>
+                            <div className="d-flex flex-wrap gap-3 justify-content-center">
+                                <a href="https://www.ieee.org/membership/join/index.html" target="_blank" rel="noreferrer" className="btn btn-lg rounded-pill fw-bold text-white px-5 py-3 shadow hero-btn" style={{ backgroundColor: 'var(--pes-green)' }}>
+                                    Join IEEE PES Now
+                                </a>
+                                <Link href="/pages/membership-benefits" className="btn btn-lg rounded-pill fw-bold px-4 py-3 text-white hero-btn-outline border-white border-opacity-25" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'white !important' }}>
+                                    Discover Benefits
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* About IEEE and PES Section (Exact Requested Markup) */}
+                <div className="vc_row wpb_row vc_row-fluid mt-4 mb-5 pb-5">
                     <div className="wpb_column vc_column_container vc_col-sm-12">
                         <div className="vc_column-inner text-center">
-                            <div className="wpb_wrapper">
-                                <h3 className="fw-bold" style={{ marginBottom: "20px", display: 'inline-block', padding: '12px 35px', border: '3px solid var(--pes-green)', color: 'var(--pes-green)', fontSize: '1.4rem', textTransform: 'uppercase' }}>About IEEE and PES</h3>
+                            <div className="wpb_wrapper container">
+                                <h3 className="fw-bold" style={{ marginBottom: "20px", display: "inline-block", padding: "12px 35px", border: "3px solid var(--pes-green)", color: "var(--pes-green)", fontSize: "1.4rem", textTransform: "uppercase" }}>
+                                    About IEEE and PES
+                                </h3>
                                 <div className="row text-start mt-5">
                                     <div className="col-md-6 mb-4">
-                                        <div className="p-5 bg-white shadow-sm border rounded h-100 border-start border-4 border-success">
+                                        <div className="p-4 p-md-5 bg-white shadow-sm border rounded h-100 border-start border-4 border-success">
                                             <h4 className="mb-4 text-dark fw-bold">What is IEEE?</h4>
-                                            <p className="mb-5 text-muted lh-lg">IEEE is the world’s largest technical professional organization dedicated to advancing technology for the benefit of humanity.</p>
-                                            <a className="btn btn-outline-success fw-bold px-4 py-2" href="https://www.ieee.org/membership/join/index.html?WT.mc_id=hc_join" title="Join IEEE" target="_blank" rel="noreferrer" style={{ borderRadius: '0', borderWidth: '2px' }}>Join IEEE</a>
+                                            <p className="mb-5 text-muted lh-lg">
+                                                IEEE is the world’s largest technical professional organization dedicated to advancing technology for the benefit of humanity.
+                                            </p>
+                                            <a className="btn btn-outline-success fw-bold px-4 py-2" href="https://www.ieee.org/membership/join/index.html?WT.mc_id=hc_join" title="Join IEEE" target="_blank" rel="noreferrer" style={{ borderRadius: "0px", borderWidth: "2px" }}>
+                                                Join IEEE
+                                            </a>
                                         </div>
                                     </div>
                                     <div className="col-md-6 mb-4">
-                                        <div className="p-5 bg-white shadow-sm border rounded h-100 border-start border-4 border-success">
+                                        <div className="p-4 p-md-5 bg-white shadow-sm border rounded h-100 border-start border-4 border-success">
                                             <h4 className="mb-4 text-dark fw-bold">What is the IEEE Power &amp; Energy Society?</h4>
-                                            <p className="mb-5 text-muted lh-lg">The mission of IEEE Power &amp; Energy Society is to be the leading provider of scientific and engineering information on electric power and energy for the betterment of society, and preferred professional development source of its members.</p>
-                                            <a className="btn btn-outline-success fw-bold px-4 py-2" href="https://www.ieee.org/membership-catalog/productdetail/showProductDetailPage.html?product=MEMPE031&refProd=MEMPE031" title="Join IEEE PES" target="_blank" rel="noreferrer" style={{ borderRadius: '0', borderWidth: '2px' }}>Join IEEE PES</a>
+                                            <p className="mb-5 text-muted lh-lg">
+                                                The mission of IEEE Power &amp; Energy Society is to be the leading provider of scientific and engineering information on electric power and energy for the betterment of society, and preferred professional development source of its members.
+                                            </p>
+                                            <a className="btn btn-outline-success fw-bold px-4 py-2" href="https://www.ieee.org/membership-catalog/productdetail/showProductDetailPage.html?product=MEMPE031&amp;refProd=MEMPE031" title="Join IEEE PES" target="_blank" rel="noreferrer" style={{ borderRadius: "0px", borderWidth: "2px" }}>
+                                                Join IEEE PES
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
@@ -821,27 +778,22 @@ export default function Home() {
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Footer Global Component */}
-            <Footer />
+                <Footer />
 
-            {/* Gallery Preview Modal */}
-            <div className="gallery-preview-modal" id="galleryPreview">
-                <div className="gallery-preview-content">
-                    <div className="gallery-preview-close">
-                        <i className="ri-close-line"></i>
-                    </div>
-                    <img src={null} id="previewImg" alt="Preview" />
-                    <div className="preview-timer-container">
-                        <div className="preview-timer-bar" id="previewTimer"></div>
+                {/* Gallery Preview Modal */}
+                <div className="gallery-preview-modal" id="galleryPreview">
+                    <div className="gallery-preview-content">
+                        <div className="gallery-preview-close" role="button" aria-label="Close preview">
+                            <i className="ri-close-line"></i>
+                        </div>
+                        <img src="" id="previewImg" alt="Preview" />
+                        <div className="preview-timer-container">
+                            <div className="preview-timer-bar" id="previewTimer"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            {/* Bootstrap JS */}
-
-        </div>
         </>
     );
 }

@@ -88,7 +88,7 @@ export default function ExecomPage() {
             <section className="section-padding" style={{ background: '#f8fafc' }}>
                 <div className="container">
                     <div className="section-header text-center mb-5">
-                        <span className="section-badge">Leadership</span>
+                        
                         <h2 className="section-title mt-3">2025–2026 Executive Committee</h2>
                         <p className="section-desc mx-auto" style={{ maxWidth: '600px' }}>
                             Dedicated professionals and volunteers driving the innovation and excellence of IEEE PES Kerala Chapter.

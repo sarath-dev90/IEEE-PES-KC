@@ -28,7 +28,7 @@ export default function AnnouncementsPage() {
             <section className="section-padding">
                 <div className="container">
                     <div className="section-header mb-5">
-                        <span className="section-badge">Latest</span>
+                        
                         <h2 className="section-title mt-3">All Announcements</h2>
                         <p className="section-desc">Stay up to date with the latest news, calls, and updates from IEEE PES Kerala Chapter.</p>
                     </div>

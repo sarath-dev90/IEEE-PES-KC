@@ -39,7 +39,7 @@ export default function StudentBranchesPage() {
             <section className="section-padding">
                 <div className="container">
                     <div className="section-header mb-5">
-                        <span className="section-badge">Chapters</span>
+                        
                         <h2 className="section-title mt-3">Our Student Community</h2>
                         <p className="section-desc">Over {branches.length > 0 ? branches.length : '50+'} student branch chapters across Kerala driving technical excellence at the grassroots level.</p>
                     </div>

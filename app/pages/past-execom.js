@@ -91,7 +91,7 @@ export default function PastExecomPage() {
             <section className="section-padding" style={{ background: '#f8fafc' }}>
                 <div className="container">
                     <div className="section-header text-center mb-5">
-                        <span className="section-badge">History</span>
+                        
                         <h2 className="section-title mt-3">Previous Leadership Teams</h2>
                         <p className="section-desc mx-auto" style={{ maxWidth: '600px' }}>
                             Honoring the dedicated professionals and volunteers who built our chapter into what it is today.

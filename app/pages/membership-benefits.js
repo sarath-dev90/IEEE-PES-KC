@@ -35,7 +35,7 @@ export default function MembershipBenefitsPage() {
             <section className="section-padding">
                 <div className="container">
                     <div className="section-header mb-5">
-                        <span className="section-badge">Why Join</span>
+                        
                         <h2 className="section-title mt-3">What You Get as a Member</h2>
                         <p className="section-desc">Join the world&apos;s leading power engineering society and unlock a world of opportunities.</p>
                     </div>
@@ -59,14 +59,14 @@ export default function MembershipBenefitsPage() {
             <section className="section-padding" style={{ background: '#f8fafc' }}>
                 <div className="container">
                     <div className="section-header mb-5">
-                        <span className="section-badge">Membership Types</span>
+                        
                         <h2 className="section-title mt-3">Choose Your Plan</h2>
                     </div>
                     <div className="row g-4 justify-content-center">
                         {plans.map((p, i) => (
                             <div key={i} className="col-md-4">
                                 <div className="update-box text-center" style={{ borderTop: p.highlight ? '4px solid var(--pes-green)' : '4px solid transparent' }}>
-                                    {p.highlight && <span className="section-badge mb-3 d-inline-block">Most Popular</span>}
+                                    
                                     <h3 style={{ color: 'var(--header-color)', fontWeight: 800 }}>{p.title}</h3>
                                     <div style={{ fontSize: '2.5rem', fontWeight: 900, color: 'var(--pes-green)', lineHeight: 1, margin: '16px 0 4px' }}>{p.price}</div>
                                     <div style={{ color: '#999', fontSize: 14, marginBottom: 24 }}>{p.per}</div>

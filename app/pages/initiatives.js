@@ -57,7 +57,7 @@ export default function InitiativesPage() {
             <section className="section-padding">
                 <div className="container">
                     <div className="section-header mb-5">
-                        <span className="section-badge">Programs</span>
+                        
                         <h2 className="section-title mt-3">What We Do</h2>
                         <p className="section-desc">A comprehensive set of programs designed to empower every member — from students to seasoned professionals.</p>
                     </div>
