@@ -1,8 +1,9 @@
 'use client';
-import { useEffect } from 'react';
-import Script from 'next/script';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import Swiper from 'swiper';
@@ -11,7 +12,6 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
-import { useState } from 'react';
 
 export default function Home() {
     const [events, setEvents] = useState([]);
@@ -19,150 +19,84 @@ export default function Home() {
     const [gallery, setGallery] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Fetch data from API
     useEffect(() => {
-  console.log('Fetching data from /api/admin');
-  fetch('/api/admin')
-    .then(res => {
-      console.log('Response status:', res.status);
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      return res.json();
-    })
-    .then(data => {
-      console.log('Received data:', data);
-      // The API returns { success: true, data: {...} }
-      if (data.success && data.data) {
-        setEvents(data.data.events || []);
-        setAnnouncements(data.data.announcements || []);
-        setGallery(data.data.gallery || []);
-      } else {
-        // Fallback to empty arrays
-        setEvents([]);
-        setAnnouncements([]);
-        setGallery([]);
-      }
-      setIsLoading(false);
-    })
-    .catch(err => {
-      console.error("Error fetching home data:", err);
-      // Set empty arrays on error so the page still renders
-      setEvents([]);
-      setAnnouncements([]);
-      setGallery([]);
-      setIsLoading(false);
-    });
-}, []);
+        fetch('/api/admin')
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res.json();
+            })
+            .then(data => {
+                if (data.success && data.data) {
+                    setEvents(data.data.events || []);
+                    setAnnouncements(data.data.announcements || []);
+                    setGallery(data.data.gallery || []);
+                }
+                setIsLoading(false);
+            })
+            .catch(err => {
+                console.error("Error fetching home data:", err);
+                setEvents([]);
+                setAnnouncements([]);
+                setGallery([]);
+                setIsLoading(false);
+            });
+    }, []);
 
+    // Initialize scripts after data loads
     useEffect(() => {
         if (isLoading) return;
-        // Helper to load AOS/Swiper if they are global
+
         const initScripts = () => {
+            // Initialize AOS
             AOS.init({
                 duration: 600,
                 easing: 'ease-out',
-                once: true
+                once: true,
+                offset: 50
             });
 
-            // Marquee Scroll Effect
-            window.addEventListener('scroll', () => {
+            // Upcoming Events Swiper
+            const upcomingSlides = document.querySelectorAll('.upcoming-events-swiper .swiper-slide');
+            if (upcomingSlides.length > 0) {
+                new Swiper('.upcoming-events-swiper', {
+                    modules: [Pagination, Autoplay, EffectFade],
+                    slidesPerView: 1,
+                    autoplay: { delay: 3500, disableOnInteraction: false },
+                    pagination: { el: '.upcoming-swiper-pagination', clickable: true },
+                    loop: upcomingSlides.length > 1,
+                    effect: 'fade',
+                    fadeEffect: { crossFade: true }
+                });
+            }
+
+            // Recent Events Swiper
+            const recentSlides = document.querySelectorAll('.recent-events-swiper .swiper-slide');
+            if (recentSlides.length > 0) {
+                new Swiper('.recent-events-swiper', {
+                    modules: [Pagination, Autoplay],
+                    slidesPerView: 1,
+                    spaceBetween: 20,
+                    breakpoints: {
+                        768: { slidesPerView: 2, spaceBetween: 24 },
+                        1024: { slidesPerView: 3, spaceBetween: 24 },
+                        1200: { slidesPerView: 4, spaceBetween: 24 }
+                    },
+                    autoplay: { delay: 4000, disableOnInteraction: false },
+                    pagination: { el: '.recent-events-pagination', clickable: true },
+                    loop: recentSlides.length > 3,
+                });
+            }
+
+            // Gallery Marquee Scroll Effect
+            const handleMarqueeScroll = () => {
                 const marquee = document.querySelector('.marquee-wrapper');
                 if (marquee) {
                     const scrollPos = window.scrollY;
-                    marquee.style.transform = `translateX(${-scrollPos * 1.8}px)`;
+                    marquee.style.transform = `translateX(${-scrollPos * 0.5}px)`;
                 }
-            });
-
-            // Destroy existing swipers to recreate them with new dynamic content if necessary
-            // Note: Simple loop/re-init is usually fine with React if handled correctly
-
-            // Initialize Swiper
-            new Swiper('.gallery-swiper', {
-                modules: [Navigation, Pagination, Autoplay],
-                slidesPerView: 1,
-                spaceBetween: 20,
-                pagination: {
-                    el: '.gallery-swiper .swiper-pagination',
-                    clickable: true,
-                },
-                navigation: {
-                    nextEl: '.gallery-swiper .swiper-button-next',
-                    prevEl: '.gallery-swiper .swiper-button-prev',
-                },
-                breakpoints: {
-                    576: { slidesPerView: 2 },
-                    992: { slidesPerView: 3 },
-                    1200: { slidesPerView: 4 }
-                },
-                autoplay: {
-                    delay: 3000,
-                    disableOnInteraction: false,
-                },
-                loop: true
-            });
-
-            // Initialize Update Carousels
-            new Swiper('.upcoming-update-swiper', {
-                modules: [Navigation, Pagination, Autoplay],
-                slidesPerView: 1,
-                spaceBetween: 15,
-                autoplay: { delay: 4000 },
-                pagination: { el: '.upcoming-update-swiper .swiper-pagination', clickable: true },
-                navigation: { nextEl: '.upcoming-update-swiper .swiper-button-next', prevEl: '.upcoming-update-swiper .swiper-button-prev' },
-                loop: true
-            });
-
-            new Swiper('.recent-update-swiper', {
-                modules: [Navigation, Autoplay],
-                slidesPerView: 1,
-                spaceBetween: 15,
-                autoplay: { delay: 5000 },
-                navigation: { nextEl: '.recent-update-swiper .swiper-button-next', prevEl: '.recent-update-swiper .swiper-button-prev' },
-                loop: true
-            });
-
-            // Initialize Flagship Swipers
-            new Swiper('.akpessc-swiper', {
-                modules: [Navigation, Pagination],
-                slidesPerView: 1,
-                spaceBetween: 30,
-                loop: true,
-                pagination: {
-                    el: '.akpessc-swiper .swiper-pagination',
-                    clickable: true,
-                },
-                navigation: {
-                    nextEl: '.akpessc-swiper .swiper-button-next',
-                    prevEl: '.akpessc-swiper .swiper-button-prev',
-                },
-            });
-
-            const headerSwiper = new Swiper('.header-swiper', {
-                modules: [EffectFade],
-                effect: 'fade',
-                fadeEffect: { crossFade: true },
-                allowTouchMove: false,
-            });
-
-            const flagshipSwiper = new Swiper('.dynamic-flagship-swiper', {
-                modules: [Pagination, Autoplay],
-                slidesPerView: 1,
-                spaceBetween: 30,
-                loop: true,
-                autoplay: {
-                    delay: 4000,
-                    disableOnInteraction: false,
-                },
-                pagination: {
-                    el: '.dynamic-flagship-swiper .swiper-pagination',
-                    clickable: true,
-                },
-            });
-
-            // Sync header with content
-            flagshipSwiper.on('slideChange', function () {
-                headerSwiper.slideTo(flagshipSwiper.realIndex);
-            });
+            };
+            window.addEventListener('scroll', handleMarqueeScroll, { passive: true });
 
             // Gallery Preview Logic
             let galleryTimer;
@@ -170,13 +104,12 @@ export default function Home() {
             const img = document.getElementById('previewImg');
             const timerBar = document.getElementById('previewTimer');
 
-            function openGalleryPreview(imgSrc) {
+            const openGalleryPreview = (imgSrc) => {
                 if (!img || !modal || !timerBar) return;
                 img.src = imgSrc;
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
 
-                // Reset and start timer bar
                 timerBar.style.transition = 'none';
                 timerBar.style.width = '100%';
 
@@ -187,83 +120,43 @@ export default function Home() {
 
                 clearTimeout(galleryTimer);
                 galleryTimer = setTimeout(closeGalleryPreview, 10000);
-            }
+            };
 
-            function closeGalleryPreview() {
+            const closeGalleryPreview = () => {
                 if (!modal) return;
                 modal.classList.remove('active');
                 document.body.style.overflow = '';
                 clearTimeout(galleryTimer);
-            }
+            };
 
-            // Close on background click
             if (modal) modal.onclick = closeGalleryPreview;
 
-            // Attach clicks to gallery cards
             document.querySelectorAll('.gallery-card').forEach(card => {
                 card.addEventListener('click', () => {
                     const imgElement = card.querySelector('img');
-                    if (imgElement) {
-                        openGalleryPreview(imgElement.src);
-                    }
+                    if (imgElement) openGalleryPreview(imgElement.src);
                 });
             });
 
             const closeBtn = document.querySelector('.gallery-preview-close');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', closeGalleryPreview);
-            }
+            if (closeBtn) closeBtn.addEventListener('click', closeGalleryPreview);
 
-            // High-Performance 144fps 3D Interpolated Tilt
-            const heroSection = document.querySelector('.hero-section');
-            const heroIsland = document.querySelector('.hero-island');
-
-            if (heroSection && heroIsland) {
-                let targetX = 0, targetY = 0;
-                let currentX = 0, currentY = 0;
-                const easing = 0.08;
-                let rafId = null;
-
-                function updateTilt() {
-                    currentX += (targetX - currentX) * easing;
-                    currentY += (targetY - currentY) * easing;
-
-                    heroIsland.style.transform = `rotateY(${currentX.toFixed(3)}deg) rotateX(${currentY.toFixed(3)}deg)`;
-
-                    if (Math.abs(targetX - currentX) > 0.01 || Math.abs(targetY - currentY) > 0.01) {
-                        rafId = requestAnimationFrame(updateTilt);
-                    } else {
-                        rafId = null;
-                        heroIsland.style.transform = `rotateY(${targetX}deg) rotateX(${targetY}deg)`;
-                    }
-                }
-
-                heroSection.addEventListener('mousemove', (e) => {
-                    const { clientX, clientY } = e;
-                    const { innerWidth, innerHeight } = window;
-                    targetX = (clientX / innerWidth - 0.5) * 20;
-                    targetY = (clientY / innerHeight - 0.5) * -20;
-                    if (!rafId) rafId = requestAnimationFrame(updateTilt);
-                }, { passive: true });
-
-                heroSection.addEventListener('mouseleave', () => {
-                    targetX = 0; targetY = 0;
-                    if (!rafId) rafId = requestAnimationFrame(updateTilt);
-                }, { passive: true });
-            }
+            return () => {
+                window.removeEventListener('scroll', handleMarqueeScroll);
+            };
         };
 
-        const timer = setTimeout(initScripts, 500);
+        const timer = setTimeout(initScripts, 300);
         return () => clearTimeout(timer);
     }, [isLoading, events, gallery, announcements]);
 
+    // Helper function to categorize events
     const getCategorizedEvents = () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
         const upcoming = [];
         const recent = [];
-        const past = [];
 
         events.forEach(event => {
             const evDate = new Date(event.date);
@@ -272,939 +165,634 @@ export default function Home() {
             if (evDate > today) {
                 upcoming.push(event);
             } else {
-                const diffTime = Math.abs(today - evDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                if (diffDays <= 30) {
-                    recent.push(event);
-                } else {
-                    past.push(event);
-                }
+                recent.push(event);
             }
         });
 
-        return { upcoming, recent, past };
+        return { upcoming, recent };
     };
 
-    const { upcoming, recent, past } = getCategorizedEvents();
-    const akpesscEvents = events.filter(e => e.tag?.toLowerCase().includes('akpessc'));
-    const wowEvents = events.filter(e => e.tag?.toLowerCase().includes('wow'));
-    const displayEventsCards = [...recent, ...past].slice(0, 4);
+    const { upcoming, recent } = getCategorizedEvents();
+
+    // Fallback Data
+    const fallbackAnnouncements = [
+        { date: "March 15, 2026", title: "Call for Papers: Power Systems Conference 2026", description: "Submit your research papers for the upcoming international conference on power systems." },
+        { date: "March 10, 2026", title: "New Student Chapter Launched at CET", description: "Welcoming the newest addition to our growing student chapter network." },
+        { date: "March 1, 2026", title: "Membership Drive 2026 Begins", description: "Join IEEE PES Kerala Chapter and get exclusive benefits." }
+    ];
+
+    const displayAnnouncements = announcements.length > 0 ? announcements : fallbackAnnouncements;
+
+    const galleryImages = [
+        { img: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "IEEE PES Conference 2025" },
+        { img: "https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Workshop on Smart Grids" },
+        { img: "https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Technical Seminar Series" },
+        { img: "https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Student Chapter Meeting" },
+        { img: "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Industry Expert Talk" },
+        { img: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", title: "Networking Event" },
+    ];
+
+    const displayGallery = gallery.length > 0 ? gallery.map(g => ({ img: g.imageUrl || g.url, title: g.title || g.name })) : galleryImages;
 
     return (
         <>
+            <style jsx global>{`
+                :root {
+                    --pes-green: #00ab84;
+                    --pes-dark: #1a1a1a;
+                    --pes-light: #f8f9fa;
+                }
+
+                /* Peak Professional Light Hero */
+                .hero-section {
+                    position: relative;
+                    overflow: hidden; 
+                    width: 100%;
+                    background-color: #ffffff;
+                    background-image: radial-gradient(circle at 10% 20%, rgba(0, 171, 132, 0.04), transparent 40%),
+                                      radial-gradient(circle at 90% 80%, rgba(0, 98, 155, 0.03), transparent 40%);
+                }
+                
+                /* Subtle engineering grid background */
+                .hero-grid {
+                    position: absolute;
+                    inset: 0;
+                    background-size: 40px 40px;
+                    background-image: linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+                                      linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+                    z-index: 0;
+                }
+
+                .hero-image-container {
+                    border: 1px solid rgba(0, 0, 0, 0.05);
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+                }
+
+                @media (max-width: 768px) {
+                    .hero-section {
+                        min-height: auto !important;
+                        padding-top: 5rem !important; 
+                        padding-bottom: 5rem !important;
+                    }
+                    
+                    .hero-section h1 { font-size: 2.5rem !important; }
+                    .hero-section .lead { font-size: 1.05rem !important; }
+                    .hero-section .btn { width: 100%; display: block; text-align: center; }
+                    
+                    .stats-container {
+                        flex-direction: column !important;
+                        align-items: flex-start !important;
+                        gap: 1.5rem !important;
+                    }
+                    .stats-divider { display: none; }
+                }
+
+                .hero-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 10px 25px rgba(0, 171, 132, 0.3) !important;
+                }
+                
+                .hero-btn-outline {
+                    border: 2px solid rgba(0, 0, 0, 0.1) !important;
+                    color: #1a202c !important;
+                    background: rgba(255, 255, 255, 0.8) !important;
+                    backdrop-filter: blur(10px);
+                }
+
+                .hero-btn-outline:hover {
+                    transform: translateY(-2px);
+                    border-color: rgba(0, 0, 0, 0.2) !important;
+                    background: #f8fafc !important;
+                }
+
+                /* Marquee & Gallery */
+                .marquee-container {
+                    animation: scroll-left 50s linear infinite;
+                    display: flex;
+                    width: max-content;
+                }
+                .marquee-container:hover { animation-play-state: paused; }
+                
+                @keyframes scroll-left {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(-50%); }
+                }
+
+                .gallery-card { transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; }
+                .gallery-card:hover {
+                    transform: translateY(-10px);
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.15) !important;
+                }
+                .gallery-img { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+                .gallery-card:hover .gallery-img { transform: scale(1.1); }
+
+                /* Event Cards */
+                .event-card-hover {
+                    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+                    border: 1px solid rgba(0,0,0,0.05) !important;
+                }
+                .event-card-hover:hover {
+                    transform: translateY(-8px);
+                    box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+                }
+                .event-card-img { transition: transform 0.5s ease; }
+                .event-card-hover:hover .event-card-img { transform: scale(1.05); }
+
+                /* Preview Modal */
+                .gallery-preview-modal {
+                    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                    background: rgba(0, 0, 0, 0.95); display: none; align-items: center;
+                    justify-content: center; z-index: 9999; backdrop-filter: blur(10px);
+                }
+                .gallery-preview-modal.active { display: flex; }
+                .gallery-preview-content { position: relative; max-width: 90%; max-height: 90%; }
+                .gallery-preview-content img { max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: 8px; }
+                .gallery-preview-close {
+                    position: absolute; top: -40px; right: 0; color: white;
+                    font-size: 2rem; cursor: pointer; transition: transform 0.3s ease;
+                }
+                .gallery-preview-close:hover { transform: scale(1.2); }
+                .preview-timer-container {
+                    position: absolute; bottom: -30px; left: 0; width: 100%;
+                    height: 4px; background: rgba(255, 255, 255, 0.2); border-radius: 2px; overflow: hidden;
+                }
+                .preview-timer-bar { height: 100%; background: var(--pes-green); width: 100%; }
+
+                @keyframes float {
+                    0%, 100% { transform: translateY(0px); }
+                    50% { transform: translateY(-15px); }
+                }
+                .floating-badge { animation: float 4s ease-in-out infinite; }
+            `}</style>
+
             <div className="box-layout">
-                {/* Header */}
-                <header>
-                    {/* Top Bar */}
-                    <div className="header-top-bar">
-                        <div className="container-fluid px-4">
-                            <div className="d-flex justify-content-between align-items-center flex-wrap">
-                                <div>
-                                    <a href="https://www.ieee.org/" target="_blank"><i className="fa-solid fa-house me-1"></i>
-                                        IEEE.org</a>
-                                    <a href="https://ieeexplore.ieee.org/" target="_blank" className="topBar-item-border">IEEE
-                                        Xplore</a>
-                                    <a href="https://standards.ieee.org/" target="_blank"
-                                        className="topBar-item-border d-none d-md-inline">IEEE Standards</a>
-                                    <a href="https://ieeekerala.org/" target="_blank"
-                                        className="topBar-item-border d-none d-lg-inline">IEEE Kerala Section</a>
-                                    <a href="https://ieeeindiacouncil.org/" target="_blank"
-                                        className="topBar-item-border d-none d-lg-inline">IEEE India Council</a>
-                                    <a href="https://ieee-pes.org/" target="_blank"
-                                        className="topBar-item-border d-none d-lg-inline">IEEE PES</a>
+                <Navbar />
+
+                {/* Peak Professional Light Hero Section */}
+                <div id="hero" className="hero-section d-flex align-items-center" style={{ minHeight: '85vh' }}>
+                    <div className="hero-grid"></div>
+
+                    <div className="container position-relative py-5" style={{ zIndex: 2 }}>
+                        <div className="row align-items-center g-5 pt-lg-5">
+                            <div className="col-lg-7" data-aos="fade-right" data-aos-duration="1000">
+                                <div className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-4" style={{ background: 'rgba(255,255,255,0.8)', border: '1px solid rgba(0,0,0,0.08)', backdropFilter: 'blur(10px)', boxShadow: '0 4px 6px rgba(0,0,0,0.02)' }}>
+                                    <span className="badge rounded-pill px-3 py-2 text-uppercase fw-bold text-white" style={{ backgroundColor: 'var(--pes-green) !important', letterSpacing: '0.5px', fontSize: '0.7rem' }}>Award Winning Chapter</span>
+                                    <span className="text-secondary fw-semibold d-none d-sm-inline" style={{ fontSize: '0.9rem' }}>Founded 1999</span>
                                 </div>
-                                <div className="social-icons-header d-none d-md-block">
-                                    <a href="https://www.linkedin.com/company/ieee-pes-kerala/" target="_blank" aria-label="LinkedIn"><i
-                                        className="fa-brands fa-linkedin-in"></i></a>
-                                    <a href="https://www.instagram.com/ieeepeskerala/" target="_blank" aria-label="Instagram"><i
-                                        className="fa-brands fa-instagram"></i></a>
-                                    <a href="https://www.facebook.com/ieeepeskerala" target="_blank" aria-label="Facebook"><i
-                                        className="fa-brands fa-facebook-f"></i></a>
-                                    <a href="https://twitter.com/ieeepeskerala" target="_blank" aria-label="Twitter"><i
-                                        className="fa-brands fa-x-twitter"></i></a>
-                                    <a href="https://whatsapp.com/channel/0029VajmXb82ER6ZqI0P8R1I" target="_blank" aria-label="WhatsApp"><i
-                                        className="fa-brands fa-whatsapp"></i></a>
+
+                                <h1 className="fw-bolder display-3 mb-4" style={{ letterSpacing: '-1px', lineHeight: '1.2', color: '#0f172a' }}>
+                                    Powering Kerala's <br className="d-none d-md-block" />
+                                    <span className="pb-1 d-inline-block position-relative" style={{ background: 'linear-gradient(90deg, #00ab84, #0077b5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                                        Energy Future
+                                    </span>
+                                </h1>
+
+                                <p className="lead mb-4 text-secondary" style={{ fontSize: '1.15rem', lineHeight: '1.6', maxWidth: '580px' }}>
+                                    Join India's premier IEEE PES chapter with <strong style={{ color: '#0f172a' }}>1,200+ members</strong>, <strong style={{ color: '#0f172a' }}>50+ student branches</strong>, and a legacy of excellence in electric power and energy innovation.
+                                </p>
+
+                                <div className="d-flex flex-wrap gap-3 mb-5">
+                                    <Link href="/membership" className="btn btn-lg rounded-pill text-white px-5 py-3 fw-bold hero-btn shadow" style={{ backgroundColor: 'var(--pes-green)' }}>
+                                        Become a Member
+                                        <i className="ri-arrow-right-line ms-2"></i>
+                                    </Link>
+                                    <Link href="/events" className="btn btn-lg rounded-pill px-5 py-3 fw-bold hero-btn-outline">
+                                        Explore Events
+                                    </Link>
+                                </div>
+
+                                <div className="d-flex flex-wrap gap-4 align-items-center border-top pt-4 stats-container" style={{ borderColor: 'rgba(0,0,0,0.08) !important' }}>
+                                    <div>
+                                        <h3 className="fw-bold fs-2 mb-0" style={{ color: '#0f172a' }}>1,200+</h3>
+                                        <p className="small mb-0 text-uppercase fw-semibold text-muted" style={{ letterSpacing: '0.5px' }}>Members</p>
+                                    </div>
+                                    <div className="stats-divider" style={{ width: '1px', height: '40px', backgroundColor: 'rgba(0,0,0,0.1)' }}></div>
+                                    <div>
+                                        <h3 className="fw-bold fs-2 mb-0" style={{ color: '#0f172a' }}>50+</h3>
+                                        <p className="small mb-0 text-uppercase fw-semibold text-muted" style={{ letterSpacing: '0.5px' }}>Student Branches</p>
+                                    </div>
+                                    <div className="stats-divider" style={{ width: '1px', height: '40px', backgroundColor: 'rgba(0,0,0,0.1)' }}></div>
+                                    <div>
+                                        <h3 className="fw-bold fs-2 mb-0" style={{ color: '#0f172a' }}>#1</h3>
+                                        <p className="small mb-0 text-uppercase fw-semibold text-muted" style={{ letterSpacing: '0.5px' }}>Global Ranking</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="col-lg-5 d-none d-lg-block" data-aos="fade-left" data-aos-duration="1200" data-aos-delay="200">
+                                <div className="position-relative mt-4">
+                                    {/* Offset Decorative Border */}
+                                    <div className="position-absolute rounded-4" style={{ top: '25px', left: '-25px', right: '25px', bottom: '-25px', border: '1px solid rgba(0,171,132,0.3)', zIndex: 0 }}></div>
+
+                                    <div className="rounded-4 overflow-hidden position-relative hero-image-container bg-white" style={{ zIndex: 1 }}>
+                                        <img
+                                            src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                                            alt="IEEE PES Kerala Chapter Engineering"
+                                            className="w-100 object-fit-cover"
+                                            style={{ height: '520px' }}
+                                        />
+                                        
+                                        {/* Image Gradient Light Overlay for depth */}
+                                        <div className="position-absolute inset-0 w-100 h-100" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 40%)', top: 0, left: 0 }}></div>
+
+                                        <div className="position-absolute bottom-0 start-0 m-4 p-3 rounded-3 shadow-lg floating-badge d-flex align-items-center gap-3" style={{ background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', border: '1px solid rgba(0,0,0,0.05)', maxWidth: '280px' }}>
+                                            <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '55px', height: '55px' }}>
+                                                <i className="ri-trophy-line fs-2" style={{ color: 'var(--pes-green)' }}></i>
+                                            </div>
+                                            <div>
+                                                <h6 className="mb-1 fw-bold fs-6" style={{ letterSpacing: '0.3px', color: '#0f172a' }}>Outstanding Chapter</h6>
+                                                <p className="mb-0 small text-muted">IEEE PES Award</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    {/* Navigation */}
-                    <nav className="navbar navbar-expand-lg">
-                        <div className="container-fluid px-4">
-                            <Link className="navbar-brand d-flex align-items-center" href="/">
-                                <Image src="/images/ieee-images/IEEE_logo.png" alt="IEEE PES Kerala" priority width={120} height={40} style={{ objectFit: 'contain' }} />
-                                <span className="ms-2 fw-bold" style={{ color: 'var(--header-color)', fontSize: '1.2rem' }}>IEEE PES Kerala</span>
-                            </Link>
-                            <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                                aria-label="Toggle navigation">
-                                <span className="navbar-toggler-icon"></span>
-                            </button>
-                            <div className="collapse navbar-collapse justify-content-center" id="navbarNav">
-                                <ul className="navbar-nav">
-                                    <li className="nav-item">
-                                        <Link href="/" className="nav-link active">Home</Link>
-                                    </li>
-                                    <li className="nav-item dropdown">
-                                        <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">About</a>
-                                        <ul className="dropdown-menu">
-                                            <li><Link href="/pages/about" className="dropdown-item">About IEEE PES</Link></li>
-                                            <li><Link href="/pages/vision-mission" className="dropdown-item">Vision & Mission</Link></li>
-                                            <li><Link href="/pages/history" className="dropdown-item">History</Link></li>
-                                        </ul>
-                                    </li>
-                                    <li className="nav-item dropdown">
-                                        <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Execom</a>
-                                        <ul className="dropdown-menu">
-                                            <li><Link href="/pages/execom" className="dropdown-item">Executive Committee</Link></li>
-                                            <li><Link href="/pages/past-execom" className="dropdown-item">Past Execom</Link></li>
-                                        </ul>
-                                    </li>
-                                    <li className="nav-item dropdown">
-                                        <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Activities</a>
-                                        <ul className="dropdown-menu">
-                                            <li><Link href="/pages/student-branches" className="dropdown-item">Student Branch
-                                                Chapters</Link></li>
-                                            <li><Link href="/pages/initiatives" className="dropdown-item">Initiatives</Link></li>
-                                            <li><Link href="/pages/awards" className="dropdown-item">Awards</Link></li>
-                                        </ul>
-                                    </li>
-                                    <li className="nav-item dropdown">
-                                        <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Events</a>
-                                        <ul className="dropdown-menu">
-                                            <li><Link href="/pages/upcoming-events" className="dropdown-item">Upcoming Events</Link></li>
-                                            <li><Link href="/pages/past-events" className="dropdown-item">Past Events</Link></li>
-                                        </ul>
-                                    </li>
-                                    <li className="nav-item dropdown">
-                                        <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Membership</a>
-                                        <ul className="dropdown-menu">
-                                            <li><Link href="/pages/membership-benefits" className="dropdown-item">Membership Benefits</Link>
-                                            </li>
-                                            <li><a href="https://www.ieee.org/membership/join/index.html" target="_blank"
-                                                className="dropdown-item">Join IEEE</a></li>
-                                            <li><a href="https://ieee-pes.org/membership/" target="_blank"
-                                                className="dropdown-item">Join IEEE PES</a></li>
-                                        </ul>
-                                    </li>
-                                    <li className="nav-item">
-                                        <Link href="/pages/gallery" className="nav-link">Gallery</Link>
-                                    </li>
-                                    <li className="nav-item">
-                                        <Link href="/pages/resources" className="nav-link">Resources</Link>
-                                    </li>
-                                    <li className="nav-item">
-                                        <Link href="/pages/newsletters" className="nav-link">Newsletters</Link>
-                                    </li>
-                                    <li className="nav-item">
-                                        <Link href="/pages/contact" className="nav-link">Contact</Link>
-                                    </li>
+                {/* About Message Section */}
+                <div className="container py-5 mt-4">
+                    <div className="row">
+                        <div className="col-12">
+                            <div className="py-2" data-aos="fade-up">
+                                <p style={{ textAlign: "justify", fontSize: "1.1rem", lineHeight: "1.8", color: '#444' }}>
+                                    The <strong>IEEE PES Kerala Chapter</strong> was founded in 1999 with just 12 members and has since grown into one of the most recognized chapters in the world. It won the Outstanding Chapter Award in 2012 and the PES Membership Growth Award in 2013, and claimed first place in the IEEE PES Chapters Website Contest the same year. Membership surpassed 1,200 by 2017, elevating it to large chapter status. Its mission is to be the leading provider of scientific and engineering knowledge on electric power and energy for the betterment of society. With 50+ Student Branch Chapters and numerous technical events, it remains a highly active and award-winning chapter under the IEEE Kerala Section.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Vision & Mission Section */}
+                <div className="container pb-5">
+                    <div className="row g-4 pt-3">
+                        <div className="col-md-6" data-aos="fade-up" data-aos-delay="100">
+                            <div className="p-4 p-md-5 rounded-4 border bg-white shadow-sm h-100 position-relative mt-4" style={{ transition: 'transform 0.3s ease', cursor: 'default' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                                <div className="position-absolute top-0 start-0 translate-middle ms-5 bg-white p-2 rounded-circle shadow-sm" style={{ marginTop: '-4px' }}>
+                                    <div className="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
+                                        <i className="ri-eye-line fs-3" style={{ color: 'var(--pes-green)' }}></i>
+                                    </div>
+                                </div>
+                                <h3 className="fw-bold mt-3 mb-3" style={{ color: '#0f172a' }}>Our Vision</h3>
+                                <p className="text-secondary mb-0" style={{ lineHeight: '1.7' }}>
+                                    To be the leading provider of scientific and engineering information on electric power and energy for the betterment of society, and the preferred professional development source for our members.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="col-md-6" data-aos="fade-up" data-aos-delay="200">
+                            <div className="p-4 p-md-5 rounded-4 border bg-white shadow-sm h-100 position-relative mt-4" style={{ transition: 'transform 0.3s ease', cursor: 'default' }} onMouseOver={e => e.currentTarget.style.transform = 'translateY(-5px)'} onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}>
+                                <div className="position-absolute top-0 start-0 translate-middle ms-5 bg-white p-2 rounded-circle shadow-sm" style={{ marginTop: '-4px' }}>
+                                    <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '60px', height: '60px' }}>
+                                        <i className="ri-rocket-2-line fs-3 text-primary"></i>
+                                    </div>
+                                </div>
+                                <h3 className="fw-bold mt-3 mb-3" style={{ color: '#0f172a' }}>Our Mission</h3>
+                                <p className="text-secondary mb-0" style={{ lineHeight: '1.7' }}>
+                                    To foster technological innovation and excellence for the benefit of humanity by providing high-quality publications, engaging conferences, and valuable educational programs in power and energy.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                {/* Announcements & Upcoming Events Section */}
+                <div className="container my-5">
+                    <div className="row align-items-stretch g-4">
+                        {/* Announcements */}
+                        <div className="col-lg-6" data-aos="fade-up">
+                            <div className="p-4 p-md-5 rounded border bg-white shadow-sm h-100" style={{ borderTop: "4px solid var(--pes-green)" }}>
+                                <h4 className="mb-4 fw-bold d-flex align-items-center gap-2">
+                                    <i className="ri-megaphone-line text-success"></i>
+                                    Announcements
+                                </h4>
+                                <ul className="list-unstyled">
+                                    {displayAnnouncements.slice(0, 3).map((ann, idx) => (
+                                        <li className={`mb-4 pb-3 ${idx < 2 ? 'border-bottom' : ''}`} key={idx}>
+                                            <small className="text-secondary fw-bold text-uppercase d-block mb-2">
+                                                {isNaN(Date.parse(ann.date)) ? ann.date : new Date(ann.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                                            </small>
+                                            <h5 className="fw-bold mt-1 mb-2">
+                                                <Link href={ann.link || "#"} className="text-dark text-decoration-none hover-green">
+                                                    {ann.title}
+                                                </Link>
+                                            </h5>
+                                            <p className="text-muted small mb-2">{ann.description || ann.details}</p>
+                                            <Link href={ann.link || "#"} className="text-success small fw-bold text-decoration-none">
+                                                Read More →
+                                            </Link>
+                                        </li>
+                                    ))}
                                 </ul>
                             </div>
-                            <a href="https://www.ieee.org/membership/join/index.html" target="_blank"
-                                className="btn-green d-none d-lg-inline-flex">
-                                Join IEEE <i className="fa-solid fa-arrow-right"></i>
-                            </a>
                         </div>
-                    </nav>
-                </header>
 
-                {/* Hero Section */}
-                <section className="hero-section">
-                    <div className="hero-island" data-aos="zoom-in" data-aos-duration="800">
-                        <video autoPlay muted loop playsInline className="hero-video-bg" preload="auto">
-                            <source src="images/ieee-images/Video/Herovideo.mp4" type="video/mp4" />
-                        </video>
-                        <div className="hero-overlay"></div>
-
-                        <div className="hero-container-inner">
-
-                            <h1 data-aos="fade-up" data-aos-delay="200">
-                                <span className="chapter-name">IEEE PES</span> Kerala Chapter
-                            </h1>
-                            <p className="lead" data-aos="fade-up" data-aos-delay="350">
-                                Advancing technology for humanity through technical excellence, professional development,
-                                and community-driven energy solutions across the Kerala section.
-                            </p>
-
-                            <div className="hero-buttons" data-aos="fade-up" data-aos-delay="500">
-                                <Link href="/pages/about" className="btn-glass btn-glass-primary">
-                                    Our Legacy <i className="fa-solid fa-arrow-right"></i>
-                                </Link>
-                                <Link href="/pages/upcoming-events" className="btn-glass">
-                                    Join Mission <i className="fa-solid fa-bolt"></i>
-                                </Link>
-                            </div>        </div>
-
-                        <div className="hero-stats-bar" data-aos="fade-up" data-aos-delay="650">
-                            <div className="stat-card">
-                                <div className="stat-item">
-                                    <h3>1900+</h3>
-                                    <p>Members</p>
+                        {/* Upcoming Events Carousel */}
+                        <div className="col-lg-6" data-aos="fade-up" data-aos-delay="100">
+                            <div className="rounded overflow-hidden shadow-lg position-relative h-100" style={{ backgroundColor: 'var(--pes-green)', minHeight: '450px' }}>
+                                <div className="position-absolute top-0 end-0 bg-dark text-white px-3 py-2 m-3 rounded shadow" style={{ fontSize: '0.85rem', zIndex: 10 }}>
+                                    <i className="ri-calendar-event-line me-2"></i>Upcoming Events
                                 </div>
-                            </div>
-                            <div className="stat-card">
-                                <div className="stat-item">
-                                    <h3>50+</h3>
-                                    <p>Chapters</p>
-                                </div>
-                            </div>
-                            <div className="stat-card">
-                                <div className="stat-item">
-                                    <h3>100+</h3>
-                                    <p>Events</p>
-                                </div>
-                            </div>
-                            <div className="stat-card">
-                                <div className="stat-item">
-                                    <h3>26+</h3>
-                                    <p>Years</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-
-                    {/* Fixed Socials */}
-                    <div className="hero-socials-vertical" data-aos="fade-up" data-aos-delay="1500">
-                        <a href="https://www.linkedin.com/company/ieee-pes-kerala/" target="_blank" rel="noreferrer"
-                            className="social-link-v" aria-label="LinkedIn">
-                            <i className="ri-linkedin-fill"></i>
-                        </a>
-                        <a href="https://www.facebook.com/ieeepeskerala" target="_blank" rel="noreferrer" className="social-link-v"
-                            aria-label="Facebook">
-                            <i className="ri-facebook-fill"></i>
-                        </a>
-                        <a href="https://www.instagram.com/ieeepeskerala/" target="_blank" rel="noreferrer"
-                            className="social-link-v" aria-label="Instagram">
-                            <i className="ri-instagram-line"></i>
-                        </a>
-                        <a href="https://twitter.com/ieeepeskerala" target="_blank" rel="noreferrer" className="social-link-v"
-                            aria-label="X (Twitter)">
-                            <i className="ri-twitter-x-line"></i>
-                        </a>
-                        <a href="https://whatsapp.com/channel/0029VajmXb82ER6ZqI0P8R1I" target="_blank" rel="noreferrer"
-                            className="social-link-v" aria-label="WhatsApp Channel">
-                            <i className="ri-whatsapp-line"></i>
-                        </a>
-                        <div className="social-line"></div>
-                    </div>
-                </section>
-
-                {/* Marquee Section */}
-                <div className="marquee-section">
-                    <div className="marquee-wrapper">
-                        <div className="marquee-text">IEEE PES KERALA CHAPTER</div>
-                        <div className="marquee-text">IEEE PES KERALA CHAPTER</div>
-                        <div className="marquee-text">IEEE PES KERALA CHAPTER</div>
-                        <div className="marquee-text">IEEE PES KERALA CHAPTER</div>
-                        <div className="marquee-text">IEEE PES KERALA CHAPTER</div>
-                        <div className="marquee-text">IEEE PES KERALA CHAPTER</div>
-                        <div className="marquee-text">IEEE PES KERALA CHAPTER</div>
-                        <div className="marquee-text">IEEE PES KERALA CHAPTER</div>
-                        <div className="marquee-text">IEEE PES KERALA CHAPTER</div>
-                        <div className="marquee-text">IEEE PES KERALA CHAPTER</div>
-                    </div>
-                </div>
-
-                <section className="quick-updates-section">
-                    <div className="container">
-                        <div className="section-header" data-aos="fade-up">
-                            <span className="section-badge">Live Updates</span>
-                            <h2 className="section-title">Latest & Upcoming</h2>
-                            <p className="section-desc">Stay informed with the most recent happenings and future opportunities in
-                                the
-                                PES Kerala community.</p>
-                        </div>
-                        <div className="row g-4">
-                            {/* Upcoming Events Carousel */}
-                            <div className="col-lg-6">
-                                <div className="update-box h-100" data-aos="fade-right">
-                                    <div className="update-box-title">
-                                        <i className="ri-calendar-event-line"></i>
-                                        <h3>Upcoming Events</h3>
-                                    </div>
-                                    <div className="swiper update-swiper upcoming-update-swiper">
-                                        <div className="swiper-wrapper">
-                                            {upcoming.length > 0 ? upcoming.map((event, idx) => (
-                                                <div className="swiper-slide" key={idx}>
-                                                    <div className="swiper-update-card">
-                                                        <div className="swiper-update-img">
-                                                            <Image src={event.imageUrl || "/images/ieee-images/Events/pesgre_event.png"} alt={event.title} width={640} height={640} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                <div className="swiper upcoming-events-swiper h-100 w-100">
+                                    <div className="swiper-wrapper h-100">
+                                        {upcoming.length > 0 ? (
+                                            upcoming.map((evt, idx) => (
+                                                <div className="swiper-slide h-100" key={idx}>
+                                                    <div className="h-100 d-flex flex-column bg-white">
+                                                        <div style={{ height: '260px', overflow: 'hidden' }}>
+                                                            <img
+                                                                src={evt.imageUrl || "/images/ieee-images/Events/pesgre_event.png"}
+                                                                alt={evt.title}
+                                                                className="w-100 h-100 object-fit-cover"
+                                                            />
                                                         </div>
-                                                        <div className="swiper-update-body">
-                                                            <h4>{event.title}</h4>
-                                                            <div className="update-desc">
-                                                                {event.description || event.details || "No description provided."}
+                                                        <div className="p-4 d-flex flex-column justify-content-center flex-grow-1">
+                                                            <div className="mb-2">
+                                                                <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: 'var(--pes-green)', fontSize: '0.75rem' }}>
+                                                                    {new Date(evt.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                                </span>
                                                             </div>
-                                                            {event.link || event.url ? (
-                                                                <a href={event.link || event.url} target="_blank" className="btn-register mb-3">Register Now</a>
-                                                            ) : (
-                                                                <Link href="/pages/upcoming-events" className="btn-register mb-3">Learn More</Link>
-                                                            )}
-                                                            <p className="text-muted small mb-0">
-                                                                <i className="ri-map-pin-line"></i> {event.location || "Online"} |
-                                                                <i className="ri-time-line"></i> {new Date(event.date).toLocaleDateString()}
+                                                            <h3 className="h5 fw-bold mb-2 text-dark">{evt.title}</h3>
+                                                            <p className="text-muted mb-3" style={{ fontSize: '0.9rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                                                {evt.description || evt.details || "Join us for this exciting event."}
                                                             </p>
+                                                            <Link
+                                                                href={evt.link || evt.url || "#"}
+                                                                className="fw-bold text-decoration-none mt-auto d-inline-block"
+                                                                style={{ color: 'var(--pes-green)' }}
+                                                            >
+                                                                Learn More →
+                                                            </Link>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            )) : (
-                                                <div className="swiper-slide">
-                                                    <div className="swiper-update-card">
-                                                        <div className="swiper-update-body text-center p-5">
-                                                            <p>No upcoming events currently scheduled.</p>
+                                            ))
+                                        ) : (
+                                            <div className="swiper-slide h-100">
+                                                <div className="h-100 d-flex flex-column bg-white">
+                                                    <div style={{ height: '260px', overflow: 'hidden' }}>
+                                                        <img
+                                                            src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
+                                                            alt="Upcoming Event"
+                                                            className="w-100 h-100 object-fit-cover"
+                                                        />
+                                                    </div>
+                                                    <div className="p-4 d-flex flex-column justify-content-center flex-grow-1">
+                                                        <div className="mb-2">
+                                                            <span className="badge rounded-pill px-3 py-2" style={{ backgroundColor: 'var(--pes-green)', fontSize: '0.75rem' }}>Coming Soon</span>
                                                         </div>
+                                                        <h3 className="h5 fw-bold mb-2 text-dark">Smart Grid Symposium 2026</h3>
+                                                        <p className="text-muted mb-3" style={{ fontSize: '0.9rem' }}>
+                                                            Join industry experts for an in-depth exploration of cutting-edge smart grid technologies.
+                                                        </p>
+                                                        <Link href="/events" className="fw-bold text-decoration-none mt-auto d-inline-block" style={{ color: 'var(--pes-green)' }}>
+                                                            Learn More →
+                                                        </Link>
                                                     </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                        <div className="swiper-button-next"></div>
-                                        <div className="swiper-button-prev"></div>
-                                        <div className="swiper-pagination"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Recent Events Carousel */}
-                            <div className="col-lg-6">
-                                <div className="update-box h-100" data-aos="fade-left">
-                                    <div className="update-box-title">
-                                        <i className="ri-history-line"></i>
-                                        <h3>Recent Events</h3>
-                                    </div>
-                                    <div className="swiper update-swiper recent-update-swiper">
-                                        <div className="swiper-wrapper">
-                                            {recent.length > 0 ? recent.map((event, idx) => (
-                                                <div className="swiper-slide" key={idx}>
-                                                    <div className="swiper-update-card">
-                                                        <div className="swiper-update-img">
-                                                            <Image src={event.imageUrl || "/images/ieee-images/recent_1.png"} alt={event.title} width={640} height={640} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                                        </div>
-                                                        <div className="swiper-update-body">
-                                                            <h4>{event.title}</h4>
-                                                            <div className="update-desc">
-                                                                {event.description || event.details || "Recent successful event."}
-                                                            </div>
-                                                            <p className="text-muted small mb-0">Held on {new Date(event.date).toLocaleDateString()}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )) : (
-                                                <div className="swiper-slide">
-                                                    <div className="swiper-update-card">
-                                                        <div className="swiper-update-body text-center p-5">
-                                                            <p>No recent events recorded in the last 30 days.</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="swiper-button-next"></div>
-                                        <div className="swiper-button-prev"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Announcements Notice Board (Full Width Below) */}
-                            <div className="col-12">
-                                <div className="update-box" data-aos="fade-up" data-aos-delay="100">
-                                    <div className="update-box-title">
-                                        <i className="ri-notification-3-line"></i>
-                                        <h3>Announcements</h3>
-                                    </div>
-                                    <ul className="notice-board">
-                                        {announcements.length > 0 ? announcements.map((ann, idx) => (
-                                            <li className="notice-item" key={idx}>
-                                                <div className="notice-date">{ann.tag || "NEW"}</div>
-                                                <div className="notice-content">
-                                                    <h6>{ann.title}</h6>
-                                                    <p>{ann.description || ann.details}</p>
-                                                    {ann.url && (
-                                                        <a href={ann.url} target="_blank" className="notice-link mt-2 d-inline-block" style={{ fontSize: '0.85rem', color: 'var(--accent-color)' }}>
-                                                            Learn More <i className="ri-arrow-right-up-line"></i>
-                                                        </a>
-                                                    )}
-                                                </div>
-                                            </li>
-                                        )) : (
-                                            <li className="notice-item">
-                                                <div className="notice-content text-center w-100 p-4">
-                                                    <p>No active announcements at the moment.</p>
-                                                </div>
-                                            </li>
+                                            </div>
                                         )}
-                                    </ul>
-                                    <div className="view-all-announcements">
-                                        <Link href="/pages/announcements" className="btn-view-all">
-                                            View All Announcements <i className="ri-arrow-right-line"></i>
-                                        </Link>
-                                    </div>        </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </section>
-                {/* About Section */}
-                <section className="about-section">
-                    <div className="container">
-                        <div className="row align-items-center g-5">
-                            <div className="col-lg-6" data-aos="fade-right">
-                                <div className="about-image-wrapper">
-                                    <Image src="/images/ieee-images/about_modern.png" alt="Engineering Innovation" width={600} height={400} style={{ width: '100%', height: 'auto' }} />
-                                    <div className="about-experience-badge" data-aos="zoom-in" data-aos-delay="400">
-                                        <h4>15+</h4>
-                                        <p>Years of Impact</p>
                                     </div>
-                                </div>
-                            </div>
-                            <div className="col-lg-6 about-content" data-aos="fade-left">
-                                <span className="section-badge">About IEEE PES Kerala</span>
-                                <h2>Powering the Future of Energy</h2>
-                                <p className="lead">
-                                    As a premier chapter of the IEEE Power & Energy Society, we are at the forefront of the
-                                    global transition to sustainable energy. We empower our members through knowledge,
-                                    innovation, and a shared commitment to a greener planet.
-                                </p>
-                                <div className="row g-4 mt-2 mb-5">
-                                    <div className="col-md-6">
-                                        <div className="about-info-card">
-                                            <div className="icon-box">
-                                                <i className="ri-lightbulb-flash-line"></i>
-                                            </div>
-                                            <h5>Our Vision</h5>
-                                            <p>To be the driving force behind the technological advancements that define the
-                                                future
-                                                of the power industry.</p>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-6">
-                                        <div className="about-info-card">
-                                            <div className="icon-box">
-                                                <i className="ri-shield-flash-line"></i>
-                                            </div>
-                                            <h5>Our Mission</h5>
-                                            <p>To drive global collaboration in power electronics and energy science for the
-                                                benefit of humanity.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="d-flex gap-4 flex-wrap">
-                                    <Link href="/pages/about" className="btn-base-color">
-                                        Our Story <i className="fa-solid fa-arrow-right ms-2"></i>
-                                    </Link>
-                                    <Link href="/pages/student-branches"
-                                        className="btn btn-outline-primary px-4 py-2 rounded-pill fw-700">
-                                        Explore Student Branches
-                                    </Link>
-                                </div>        </div>
-                        </div>
-                    </div>
-                </section>
-
-
-
-
-
-                {/* Message from Chair */}
-                <section className="chair-section section-padding">
-                    <div className="container">
-                        <div className="row justify-content-center">
-                            <div className="col-lg-10">
-                                <div className="chair-message" data-aos="fade-up">
-                                    <div className="section-badge mb-3">Message from Chair</div>
-                                    <h4>Welcome to IEEE PES Kerala Chapter</h4>
-                                    <p>
-                                        It is my privilege to serve as the Chair of the IEEE Power and Energy Society (PES)
-                                        Kerala Chapter. Our chapter stands at the intersection of innovation, research, and
-                                        real-world impact—bringing together passionate students, professionals, and researchers
-                                        who are shaping the future of power and energy systems.
-                                    </p>
-                                    <p>
-                                        Through workshops, technical talks, conferences, and outreach programs, we aim to create
-                                        opportunities that inspire creativity, nurture leadership, and empower our members to
-                                        address real-world challenges in the power and energy sector. I warmly invite every
-                                        member to actively engage, share ideas, and lead initiatives.
-                                    </p>
-                                    <div className="chair-info">
-                                        <div className="chair-avatar">
-                                            <Image src="/images/ieee-images/BobyPhilp.jpeg" alt="Dr. Boby Philip" width={80} height={80} style={{ objectFit: 'cover' }} />
-                                        </div>
-                                        <div className="chair-details">
-                                            <h5>Dr. Boby Philip</h5>
-                                            <p>Chair, IEEE PES Kerala Chapter</p>
-                                        </div>
-                                    </div>
+                                    <div className="upcoming-swiper-pagination swiper-pagination position-absolute w-100" style={{ bottom: '15px' }}></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </section>
-
-                {/* Initiatives Section */}
-                <section className="initiatives-section section-padding">
-                    <div className="container">
-                        <div className="section-header" data-aos="fade-up">
-                            <span className="section-badge">Our Programs</span>
-                            <h2 className="section-title">Initiatives</h2>
-                            <p className="section-desc">IEEE PES Kerala offers various programs to support technical advancement in
-                                power and energy</p>
-                        </div>
-                        <div className="row g-4">
-                            <div className="col-lg-4" data-aos="fade-up" data-aos-delay="100">
-                                <div className="initiative-card">
-                                    <h3><i className="bi bi-mortarboard-fill"></i> Student Activities</h3>
-                                    <p>Training programs, workshops, and competitions for students to enhance their skills in
-                                        power systems, renewable energy, and smart grids.</p>
-                                </div>
-                            </div>
-                            <div className="col-lg-4" data-aos="fade-up" data-aos-delay="150">
-                                <div className="initiative-card">
-                                    <h3><i className="bi bi-briefcase-fill"></i> Professional Development</h3>
-                                    <p>Certification courses, webinars, and industry talks for professionals to stay updated
-                                        with latest trends in power and energy sector.</p>
-                                </div>
-                            </div>
-                            <div className="col-lg-4" data-aos="fade-up" data-aos-delay="200">
-                                <div className="initiative-card">
-                                    <h3><i className="bi bi-building"></i> Industry Collaboration</h3>
-                                    <p>Partnerships with power utilities, renewable energy companies, and research institutions
-                                        for knowledge transfer and innovation.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Flagships Section */}
-                <section className="flagships-section">
-                    <div className="container">
-                        <div className="section-header text-center" data-aos="fade-up">
-                            <span className="section-badge">Flagship Events</span>
-                            <h2 className="section-title">Our Premier Flagships</h2>
-                            <p className="section-desc">Witness the largest and most impactful gatherings organized by IEEE PES
-                                Kerala Chapter</p>
-                        </div>
-
-                        <div className="row g-4">
-                            {/* Left: AKPESSC */}
-                            <div className="col-lg-7">
-                                <div className="flagship-box" data-aos="fade-right">
-                                    <div className="flagship-title-area">
-                                        <i className="ri-flashlight-line"></i>
-                                        <h3 className="m-0 fw-800" style={{ fontSize: '1.3rem', color: 'var(--header-color)' }}>AKPESSC
-                                        </h3>
-                                    </div>
-                                    <div className="swiper flagship-swiper akpessc-swiper">
-                                        <div className="swiper-wrapper">
-                                            {akpesscEvents.length > 0 ? akpesscEvents.map((event, idx) => (
-                                                <div className="swiper-slide" key={idx}>
-                                                    <div className="swiper-update-card">
-                                                        <div className="swiper-update-img">
-                                                            <Image src={event.imageUrl || "/images/ieee-images/Flagships/akpessc_flagship_1770434008791.png"} alt={event.title} width={640} height={480} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                                        </div>
-                                                        <div className="swiper-update-body">
-                                                            <h5>{event.title}</h5>
-                                                            <div className="update-desc">
-                                                                {event.description || event.details}
-                                                            </div>
-                                                            {event.link || event.url ? (
-                                                                <a href={event.link || event.url} target="_blank" className="btn-register mb-3">Register Now</a>
-                                                            ) : (
-                                                                <Link href="/pages/upcoming-events" className="btn-register mb-3">Learn More</Link>
-                                                            )}
-                                                            <p className="text-muted small mb-0"><i className="ri-map-pin-line"></i> {event.location || "TBD"} |
-                                                                <i className="ri-calendar-line"></i> {event.date ? new Date(event.date).toLocaleDateString() : "Annual"}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )) : (
-                                                <div className="swiper-slide">
-                                                    <div className="swiper-update-card">
-                                                        <div className="swiper-update-img">
-                                                            <Image src="/images/ieee-images/Flagships/akpessc_flagship_1770434008791.png" alt="AKPESSC" width={640} height={480} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                                        </div>
-                                                        <div className="swiper-update-body">
-                                                            <h5>AKPESSC - All Kerala Power & Energy Society Student Congress</h5>
-                                                            <p>Our premier flagship event for students across Kerala.</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="swiper-pagination"></div>
-                                        <div className="swiper-button-next"></div>
-                                        <div className="swiper-button-prev"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Right: Dynamic Flagships */}
-                            <div className="col-lg-5">
-                                <div className="flagship-box" data-aos="fade-left">
-                                    <div className="flagship-title-area">
-                                        <i className="ri-star-line"></i>
-                                        <div className="dynamic-header-container">
-                                            <div className="swiper header-swiper">
-                                                <div className="swiper-wrapper">
-                                                    {wowEvents.map((_, i) => <div className="swiper-slide header-item-slide" key={i}>WOW</div>)}
-                                                    {events.filter(e => e.tag?.toLowerCase().includes('intellect')).map((_, i) => <div className="swiper-slide header-item-slide" key={i}>Intellect</div>)}
-                                                    {events.filter(e => e.tag?.toLowerCase().includes('pes day')).map((_, i) => <div className="swiper-slide header-item-slide" key={i}>PES Day</div>)}
-                                                    {(wowEvents.length === 0 && events.filter(e => e.tag?.toLowerCase().includes('intellect')).length === 0 && events.filter(e => e.tag?.toLowerCase().includes('pes day')).length === 0) && (
-                                                        <>
-                                                            <div className="swiper-slide header-item-slide">WOW</div>
-                                                            <div className="swiper-slide header-item-slide">Intellect</div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="swiper flagship-swiper dynamic-flagship-swiper">
-                                        <div className="swiper-wrapper">
-                                            {[
-                                                ...wowEvents,
-                                                ...events.filter(e => e.tag?.toLowerCase().includes('intellect')),
-                                                ...events.filter(e => e.tag?.toLowerCase().includes('pes day'))
-                                            ].length > 0 ? [
-                                                ...wowEvents,
-                                                ...events.filter(e => e.tag?.toLowerCase().includes('intellect')),
-                                                ...events.filter(e => e.tag?.toLowerCase().includes('pes day'))
-                                            ].map((event, idx) => (
-                                                <div className="swiper-slide" key={idx}>
-                                                    <div className="swiper-update-card mb-3">
-                                                        <div className="swiper-update-img">
-                                                            <Image src={event.imageUrl || "/images/ieee-images/Flagships/wow_flagship_1770434024340.png"} alt={event.title} width={640} height={480} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                                        </div>
-                                                        <div className="swiper-update-body">
-                                                            <h5>{event.title}</h5>
-                                                            <div className="update-desc">
-                                                                {event.description || event.details}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )) : (
-                                                <>
-                                                    <div className="swiper-slide">
-                                                        <div className="swiper-update-card mb-3">
-                                                            <div className="swiper-update-img">
-                                                                <Image src="/images/ieee-images/Flagships/wow_flagship_1770434024340.png" alt="WOW" width={640} height={480} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                                                            </div>
-                                                            <div className="swiper-update-body">
-                                                                <h5>Women in Power</h5>
-                                                                <p>Empowering women engineers to lead the energy transition.</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                        <div className="swiper-pagination"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Events Section */}
-                <section className="events-section">
-                    <div className="container-fluid px-md-5 px-4">
-                        <div className="row mb-5 align-items-end">
-                            <div className="col-lg-8" data-aos="fade-right">
-                                <span className="section-badge" style={{ background: 'rgba(8, 145, 38, 0.2)', color: 'white' }}>Upcoming
-                                    Events</span>
-                                <h2 className="section-title mb-0" style={{ fontSize: '3rem', color: 'var(--header-color)' }}>Don't Miss
-                                    Our Events</h2>
-                            </div>
-                            <div className="col-lg-4 text-lg-end mt-3 mt-lg-0" data-aos="fade-left">
-                                <Link href="/pages/upcoming-events" className="btn btn-outline-primary px-5 py-3 rounded-pill fw-700"
-                                    style={{ borderWidth: '2px' }}>
-                                    View All Events <i className="fa-solid fa-arrow-right ms-2"></i>
-                                </Link>
-                            </div>        </div>
-                        <div className="row g-4">
-                            {displayEventsCards.length > 0 ? displayEventsCards.map((event, idx) => (
-                                <div className="col-md-4 col-lg-3" key={idx} data-aos="zoom-in" data-aos-delay={(idx + 1) * 100}>
-                                    <div className="event-card">
-                                        <div className="event-card-image">
-                                            <Image src={event.imageUrl || "/images/ieee-images/Events/agm2026.png"} alt={event.title} width={640} height={640} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                        </div>
-                                        <div className="event-card-body">
-                                            <div>
-                                                <span className="event-date"><i className="bi bi-calendar-check"></i> {new Date(event.date).toLocaleDateString()}</span>
-                                                <h3>{event.title}</h3>
-                                                <div className="event-desc">
-                                                    {event.description || event.details}
-                                                </div>
-                                                <div className="read-more-btn"><i className="ri-add-line"></i> Read More Content</div>
-                                                <p className="event-venue mb-1"><i className="bi bi-geo-alt-fill"></i> {event.location || "Online"}</p>
-                                            </div>
-                                            {event.link || event.url ? (
-                                                <a href={event.link || event.url} target="_blank" className="btn-register">Register Now</a>
-                                            ) : (
-                                                <Link href="/pages/upcoming-events" className="btn-register">Learn More</Link>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            )) : (
-                                <div className="col-12 text-center p-5">
-                                    <p>Check back soon for more exciting events!</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Image Gallery Preview */}
-                <section className="gallery-section section-padding">
-                    <div className="container-fluid px-md-5 px-4">
-                        <div className="row mb-5 align-items-end">
-                            <div className="col-lg-8" data-aos="fade-right">
-                                <span className="section-badge">Gallery</span>
-                                <h2 className="section-title">Image Gallery</h2>
-                            </div>
-                            <div className="col-lg-4 text-lg-end mt-3 mt-lg-0" data-aos="fade-left">
-                                <Link href="/pages/gallery" className="btn btn-outline-primary px-5 py-3 rounded-pill fw-700">
-                                    View All Gallery <i className="fa-solid fa-arrow-right ms-2"></i>
-                                </Link>
-                            </div>
-                        </div>
-
-                        <div className="swiper gallery-swiper" data-aos="fade-up">
-                            <div className="swiper-wrapper">
-                                {gallery.length > 0 ? gallery.map((item, idx) => (
-                                    <div className="swiper-slide" key={idx}>
-                                        <div className="gallery-card">
-                                            <div className="gallery-image-wrapper">
-                                                <Image src={item.imageUrl || "/images/ieee-images/Gallery/gallery_1.png"} alt={item.title || "Gallery Image"} width={400} height={400} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                            </div>
-                                            <div className="gallery-caption">
-                                                <h3>{item.title || item.category || "Chapter Event"}</h3>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )) : (
-                                    [1, 2, 3, 4].map((i) => (
-                                        <div className="swiper-slide" key={i}>
-                                            <div className="gallery-card">
-                                                <div className="gallery-image-wrapper">
-                                                    <Image src={`/images/ieee-images/Gallery/gallery_${i}.png`} alt="Gallery" width={400} height={400} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                            {/* Add Pagination */}
-                            <div className="swiper-pagination"></div>
-                            {/* Add Navigation */}
-                            <div className="swiper-button-next"></div>
-                            <div className="swiper-button-prev"></div>
-                        </div>
-                    </div>
-                </section>
-
-
-                {/* Benefits & Join Section Wrapper */}
-                <div className="benefits-join-wrapper" style={{ background: '#f8fafc' }}>
-
-                    {/* Benefits Section */}
-                    <section className="benefits-section">
-                        <div className="container">
-                            <div className="section-header">
-                                <span className="section-badge">Why Join Us</span>
-                                <h2 className="section-title">Membership Benefits</h2>
-                                <p className="section-desc">Unlock exclusive perks and opportunities by becoming a member of IEEE
-                                    PES Kerala Chapter.</p>
-                            </div>
-
-                            <div className="row g-3">
-                                <div className="col-md-6 col-lg-4">
-                                    <div className="benefit-card">
-                                        <i className="ri-book-read-line"></i>
-                                        <div>
-                                            <h5>IEEE Xplore Access</h5>
-                                            <p>Access millions of technical documents and research publications.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="col-md-6 col-lg-4">
-                                    <div className="benefit-card">
-                                        <i className="ri-team-line"></i>
-                                        <div>
-                                            <h5>Networking</h5>
-                                            <p>Connect with global industry experts and energy professionals.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="col-md-6 col-lg-4">
-                                    <div className="benefit-card">
-                                        <i className="ri-briefcase-4-line"></i>
-                                        <div>
-                                            <h5>Career Growth</h5>
-                                            <p>Exclusive workshops, webinars, and technical certifications.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="col-md-6 col-lg-4">
-                                    <div className="benefit-card">
-                                        <i className="ri-coupon-2-line"></i>
-                                        <div>
-                                            <h5>Member Perks</h5>
-                                            <p>Special discounts on conferences and technical grants.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="col-md-6 col-lg-4">
-                                    <div className="benefit-card">
-                                        <i className="ri-award-line"></i>
-                                        <div>
-                                            <h5>Recognition</h5>
-                                            <p>Prestigious awards for professional and student excellence.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="col-md-6 col-lg-4">
-                                    <div className="benefit-card">
-                                        <i className="ri-flashlight-line"></i>
-                                        <div>
-                                            <h5>Leadership</h5>
-                                            <p>Volunteer opportunities to lead global energy initiatives.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
                 </div>
 
-                {/* Full Width CTA Section */}
-                                <section className="cta-section">
-                                    <div className="container">
-                                        <div className="cta-content-wrapper">
-                                            <div className="cta-text">
-                                                <span className="cta-badge">Get Started</span>
-                                                <h2>Ready to Power Your Future?</h2>
-                                                <p>Join the world's largest forum for sharing the latest technological developments in the
-                                                electric power industry.</p>
-                                            </div>
-                                            <div className="cta-actions">
-                                                <a href="https://ieee-pes.org/membership/" target="_blank" className="btn-cta-primary">
-                                                    Join PES Now <i className="ri-arrow-right-line"></i>
-                                                </a>
-                                                <a href="https://www.ieee.org/membership/join/index.html" target="_blank" className="btn-cta-secondary">
-                                                    Join IEEE
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
+                {/* Recent Events Section */}
+                <div className="container my-5 py-5 bg-light rounded-4">
+                    <div className="text-center mb-5" data-aos="fade-up">
+                        <h2 className="fw-bold fs-1 text-dark mb-3">
+                            Recent <span style={{ color: 'var(--pes-green)' }}>Events</span>
+                        </h2>
+                        <p className="text-muted mx-auto" style={{ maxWidth: '600px', fontSize: '1.1rem' }}>
+                            Explore our latest workshops, seminars, and networking events
+                        </p>
+                    </div>
 
-                                {/* Footer */}
-                                <footer className="footer">
-                                    <div className="container">
-                                        <div className="row g-5">
-                                            <div className="col-lg-4 col-md-6">
-                                                <div className="footer-brand">
-                                                    <Image src="/images/ieee-images/PESKC.png" alt="IEEE PES Kerala" width={150} height={50} style={{ objectFit: 'contain' }} />
-                                                    <p>The IEEE Power and Energy Society Kerala Chapter is dedicated to advancing technology for
-                                                        the benefit of humanity through power and energy innovation.</p>
-                                                    <div className="footer-social">
-                                                        <a href="https://www.linkedin.com/company/ieee-pes-kerala/" target="_blank"
-                                                            aria-label="LinkedIn">
-                                                            <i className="ri-linkedin-fill"></i>
-                                                        </a>
-                                                        <a href="https://www.facebook.com/ieeepeskerala" target="_blank" aria-label="Facebook">
-                                                            <i className="ri-facebook-fill"></i>
-                                                        </a>
-                                                        <a href="https://www.instagram.com/ieeepeskerala/" target="_blank" aria-label="Instagram">
-                                                            <i className="ri-instagram-line"></i>
-                                                        </a>
-                                                        <a href="https://twitter.com/ieeepeskerala" target="_blank" aria-label="X (Twitter)">
-                                                            <i className="ri-twitter-x-line"></i>
-                                                        </a>
-                                                        <a href="https://whatsapp.com/channel/0029VajmXb82ER6ZqI0P8R1I" target="_blank"
-                                                            aria-label="WhatsApp Channel">
-                                                            <i className="ri-whatsapp-line"></i>
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="col-lg-2 col-md-6 col-6">
-                                                <h4 className="footer-heading">Quick Links</h4>
-                                                <ul className="footer-links">
-                                                    <li><Link href="/pages/upcoming-events">Upcoming Events</Link></li>
-                                                    <li><Link href="/pages/student-branches">Student Branches</Link></li>
-                                                    <li><Link href="/pages/execom">Execom</Link></li>
-                                                    <li><Link href="/pages/gallery">Gallery</Link></li>
-                                                    <li><Link href="/pages/resources">Resources</Link></li>
-                                                    <li><Link href="/pages/newsletters">Newsletters</Link></li>
-                                                    <li><Link href="/pages/awards">Awards</Link></li>
-                                                    <li><Link href="/admin" className="admin-footer-link">Admin Dashboard</Link></li>
-                                                </ul>
-                                            </div>
-                                            <div className="col-lg-2 col-md-6 col-6">
-                                                <h4 className="footer-heading">Get Started</h4>
-                                                <ul className="footer-links">
-                                                    <li><a href="https://www.ieee.org/" target="_blank">IEEE</a></li>
-                                                    <li><a href="https://ieee-pes.org/" target="_blank">IEEE PES</a></li>
-                                                    <li><a href="https://ieeekerala.org/" target="_blank">IEEE Kerala Section</a></li>
-                                                    <li><Link href="/pages/membership-benefits">Membership Benefits</Link></li>
-                                                </ul>
-                                            </div>
-                                            <div className="col-lg-4 col-md-6">
-                                                <h4 className="footer-heading">Contact Info</h4>
-                                                <ul className="footer-links footer-contact">
-                                                    <li>
-                                                        <i className="bi bi-envelope-fill"></i>
-                                                        <a href="mailto:ieeepes.kerala@ieee.org">ieeepes.kerala@ieee.org</a>
-                                                    </li>
-                                                    <li>
-                                                        <i className="bi bi-telephone-fill"></i>
-                                                        <a href="tel:+919446189453">+91 94461 89453</a>
-                                                    </li>
-                                                    <li>
-                                                        <i className="bi bi-geo-alt-fill"></i>
-                                                        <span>HarmonIEEE, 1st Floor, Cherian&apos;s Square, Thiruvananthapuram, Kerala 695001</span>
-                                                    </li>
-                                                </ul>
-                                            </div>
+                    <div className="swiper recent-events-swiper pb-5 position-relative px-2">
+                        <div className="swiper-wrapper">
+                            {(recent.length > 0 ? recent : [
+                                { title: "Workshop on Renewable Energy Systems", img: "https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", date: "2026-03-18", desc: "Comprehensive training on solar and wind energy integration." },
+                                { title: "Power Electronics Seminar", img: "https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", date: "2026-03-15", desc: "Advanced topics in power conversion and control systems." },
+                                { title: "Student Chapter Technical Meet", img: "https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", date: "2026-03-12", desc: "Networking event for student members across Kerala." },
+                                { title: "Industry Expert Talk Series", img: "https://images.unsplash.com/photo-1593941707882-a5bba14938c7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", date: "2026-03-08", desc: "Insights from leading professionals in the power sector." }
+                            ]).map((event, idx) => (
+                                <div className="swiper-slide h-auto" key={idx}>
+                                    <Link href={event.link || event.url || "#"} className="card h-100 border-0 text-decoration-none event-card-hover" style={{ borderRadius: '12px', overflow: 'hidden' }}>
+                                        <div style={{ height: '200px', overflow: 'hidden' }}>
+                                            <img src={event.img || event.imageUrl || "https://images.unsplash.com/photo-1591115765373-5207764f72e7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"} alt={event.title} className="w-100 h-100 object-fit-cover event-card-img" />
                                         </div>
-                                    </div>
-                                    <div className="footer-bottom">
-                                        <div className="container">
-                                            <div className="row align-items-center">
-                                                <div className="col-md-6">
-                                                    <p>© 2025 <a href="https://ieeekerala.org/" target="_blank">IEEE Kerala Section</a>. All
-                                                        rights reserved.</p>
-                                                </div>
-                                                <div className="col-md-6 text-md-end">
-                                                    <p>Web Team - IEEE PES Kerala Chapter</p>
-                                                </div>
+                                        <div className="card-body p-4 d-flex flex-column bg-white">
+                                            <div className="mb-3">
+                                                <span className="badge bg-light text-dark px-3 py-2" style={{ fontSize: '0.7rem', fontWeight: '600' }}>
+                                                    {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                </span>
                                             </div>
+                                            <h4 className="card-title fw-bold fs-6 text-dark mb-3" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', minHeight: '3rem' }}>
+                                                {event.title}
+                                            </h4>
+                                            <p className="card-text text-muted mb-4 flex-grow-1" style={{ fontSize: '0.9rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                                {event.desc || event.description || "Highlights from this impactful IEEE PES event."}
+                                            </p>
+                                            <span className="fw-bold mt-auto d-inline-block small" style={{ color: 'var(--pes-green)' }}>
+                                                View Details →
+                                            </span>
                                         </div>
-                                    </div>
-                                </footer>
+                                    </Link>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="recent-events-pagination swiper-pagination position-absolute w-100" style={{ bottom: '0px' }}></div>
+                    </div>
+                </div>
 
-                                {/* Gallery Preview Modal */}
+                {/* Gallery Section */}
+                <section className="gallery-section position-relative py-5 mt-4" style={{ background: 'linear-gradient(to bottom, #f8fafb, #ffffff)' }}>
+                    <div className="container mb-5">
+                        <div className="text-center" data-aos="fade-up">
+                            <h2 className="fw-bold fs-1 text-dark mb-3">
+                                Event <span style={{ color: 'var(--pes-green)' }}>Gallery</span>
+                            </h2>
+                            <p className="text-muted mx-auto" style={{ maxWidth: '600px', fontSize: '1.1rem' }}>
+                                Glimpses from our conferences, workshops, and community gatherings
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="position-relative">
+                        <div className="position-absolute top-0 start-0" style={{ width: '80px', height: '100%', background: 'linear-gradient(to right, #f8fafb, transparent)', pointerEvents: 'none', zIndex: 10 }}></div>
+                        <div className="position-absolute top-0 end-0" style={{ width: '80px', height: '100%', background: 'linear-gradient(to left, #ffffff, transparent)', pointerEvents: 'none', zIndex: 10 }}></div>
+
+                        <div className="overflow-hidden py-3">
+                            <div className="marquee-container" style={{ gap: '24px', paddingRight: '24px' }}>
+                                {[...displayGallery, ...displayGallery].map((item, idx) => (
+                                    <div key={idx} className="gallery-card flex-shrink-0 rounded-4 overflow-hidden shadow-sm border" style={{ width: '320px', backgroundColor: 'white' }}>
+                                        <div style={{ height: '220px', overflow: 'hidden' }}>
+                                            <img src={item.img} alt={item.title} className="w-100 h-100 object-fit-cover gallery-img" />
+                                        </div>
+                                        <div className="p-3 bg-white">
+                                            <h6 className="fw-bold text-dark mb-0 text-truncate" style={{ fontSize: '0.9rem' }}>{item.title}</h6>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <p className="text-center text-muted mt-4 mb-0" style={{ fontSize: '14px', opacity: 0.6 }}>
+                            Click on any image to preview • Auto-scrolling
+                        </p>
+                    </div>
+                </section>
+
+                {/* Office Bearers Section */}
+                <div className="container my-5 py-5">
+                    <div className="text-center mb-5" data-aos="fade-up">
+                        <h3 className="fw-bold d-inline-block px-4 py-3 rounded bg-light" style={{ border: '3px solid var(--pes-green)', color: 'var(--pes-green)', fontSize: '1.2rem', textTransform: 'uppercase' }}>
+                            IEEE PES Kerala Chapter Office Bearers
+                        </h3>
+                    </div>
+
+                    <div className="row mt-5 justify-content-center">
+                        <div className="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="0">
+                            <div className="card h-100 border-0 shadow-sm" style={{ borderTop: "6px solid var(--pes-green)" }}>
+                                <div className="card-body p-4 pt-5 text-center">
+                                    <div className="mb-4">
+                                        <div className="rounded-circle bg-light d-inline-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px' }}>
+                                            <i className="ri-user-star-line fs-1" style={{ color: 'var(--pes-green)' }}></i>
+                                        </div>
+                                    </div>
+                                    <h4 className="fw-bold mb-1">Dr. Rajesh Kumar</h4>
+                                    <p className="fw-bold mb-3 small text-uppercase" style={{ color: 'var(--pes-green)', letterSpacing: '1px' }}>Chair</p>
+                                    <p className="text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
+                                        Professor, Dept. of Electrical Engineering<br />
+                                        NIT Calicut<br />
+                                        Senior Member IEEE, PES
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="100">
+                            <div className="card h-100 border-0 shadow-sm" style={{ borderTop: "6px solid var(--pes-green)" }}>
+                                <div className="card-body p-4 pt-5 text-center">
+                                    <div className="mb-4">
+                                        <div className="rounded-circle bg-light d-inline-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px' }}>
+                                            <i className="ri-user-settings-line fs-1" style={{ color: 'var(--pes-green)' }}></i>
+                                        </div>
+                                    </div>
+                                    <h4 className="fw-bold mb-1">Dr. Priya Menon</h4>
+                                    <p className="fw-bold mb-3 small text-uppercase" style={{ color: 'var(--pes-green)', letterSpacing: '1px' }}>Vice-Chair</p>
+                                    <p className="text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
+                                        Associate Professor<br />
+                                        College of Engineering Trivandrum<br />
+                                        Member IEEE, PES
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="200">
+                            <div className="card h-100 border-0 shadow-sm" style={{ borderTop: "6px solid var(--pes-green)" }}>
+                                <div className="card-body p-4 pt-5 text-center">
+                                    <div className="mb-4">
+                                        <div className="rounded-circle bg-light d-inline-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px' }}>
+                                            <i className="ri-shield-star-line fs-1" style={{ color: 'var(--pes-green)' }}></i>
+                                        </div>
+                                    </div>
+                                    <h4 className="fw-bold mb-1">Dr. Anil Nair</h4>
+                                    <p className="fw-bold mb-3 small text-uppercase" style={{ color: 'var(--pes-green)', letterSpacing: '1px' }}>Secretary</p>
+                                    <p className="text-muted" style={{ fontSize: "14px", lineHeight: "1.6" }}>
+                                        Assistant Professor<br />
+                                        TKM College of Engineering<br />
+                                        Member IEEE, PES
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Join IEEE PES CTA Section */}
+                <div className="container py-4 my-3 position-relative" data-aos="fade-up">
+                    <div className="rounded-4 overflow-hidden shadow-lg position-relative p-5 text-center" style={{ background: 'linear-gradient(135deg, #020b14 0%, #001f3f 100%)' }}>
+                        <div className="position-absolute top-0 start-0 w-100 h-100" style={{ 
+                            backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(0, 171, 132, 0.15), transparent 50%), radial-gradient(circle at 80% 50%, rgba(0, 98, 155, 0.15), transparent 50%)',
+                            zIndex: 0
+                        }}></div>
+                        
+                        <div className="position-relative" style={{ zIndex: 1 }}>
+                            <h2 className="display-5 fw-bold text-white mb-3">Elevate Your Engineering Career</h2>
+                            <p className="lead text-white-50 mx-auto mb-4" style={{ maxWidth: '700px' }}>
+                                Join the IEEE Power & Energy Society today to unlock exclusive resources, networking opportunities, and professional development in the energy sector.
+                            </p>
+                            <div className="d-flex flex-wrap gap-3 justify-content-center">
+                                <a href="https://www.ieee.org/membership/join/index.html" target="_blank" rel="noreferrer" className="btn btn-lg rounded-pill fw-bold text-white px-5 py-3 shadow hero-btn" style={{ backgroundColor: 'var(--pes-green)' }}>
+                                    Join IEEE PES Now
+                                </a>
+                                <Link href="/pages/membership-benefits" className="btn btn-lg rounded-pill fw-bold px-4 py-3 text-white hero-btn-outline border-white border-opacity-25" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'white !important' }}>
+                                    Discover Benefits
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* About IEEE and PES Section (Exact Requested Markup) */}
+                <div className="vc_row wpb_row vc_row-fluid mt-4 mb-5 pb-5">
+                    <div className="wpb_column vc_column_container vc_col-sm-12">
+                        <div className="vc_column-inner text-center">
+                            <div className="wpb_wrapper container">
+                                <h3 className="fw-bold" style={{ marginBottom: "20px", display: "inline-block", padding: "12px 35px", border: "3px solid var(--pes-green)", color: "var(--pes-green)", fontSize: "1.4rem", textTransform: "uppercase" }}>
+                                    About IEEE and PES
+                                </h3>
+                                <div className="row text-start mt-5">
+                                    <div className="col-md-6 mb-4">
+                                        <div className="p-4 p-md-5 bg-white shadow-sm border rounded h-100 border-start border-4 border-success">
+                                            <h4 className="mb-4 text-dark fw-bold">What is IEEE?</h4>
+                                            <p className="mb-5 text-muted lh-lg">
+                                                IEEE is the world’s largest technical professional organization dedicated to advancing technology for the benefit of humanity.
+                                            </p>
+                                            <a className="btn btn-outline-success fw-bold px-4 py-2" href="https://www.ieee.org/membership/join/index.html?WT.mc_id=hc_join" title="Join IEEE" target="_blank" rel="noreferrer" style={{ borderRadius: "0px", borderWidth: "2px" }}>
+                                                Join IEEE
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div className="col-md-6 mb-4">
+                                        <div className="p-4 p-md-5 bg-white shadow-sm border rounded h-100 border-start border-4 border-success">
+                                            <h4 className="mb-4 text-dark fw-bold">What is the IEEE Power &amp; Energy Society?</h4>
+                                            <p className="mb-5 text-muted lh-lg">
+                                                The mission of IEEE Power &amp; Energy Society is to be the leading provider of scientific and engineering information on electric power and energy for the betterment of society, and preferred professional development source of its members.
+                                            </p>
+                                            <a className="btn btn-outline-success fw-bold px-4 py-2" href="https://www.ieee.org/membership-catalog/productdetail/showProductDetailPage.html?product=MEMPE031&amp;refProd=MEMPE031" title="Join IEEE PES" target="_blank" rel="noreferrer" style={{ borderRadius: "0px", borderWidth: "2px" }}>
+                                                Join IEEE PES
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <Footer />
+
+                {/* Gallery Preview Modal */}
                 <div className="gallery-preview-modal" id="galleryPreview">
                     <div className="gallery-preview-content">
-                        <div className="gallery-preview-close">
+                        <div className="gallery-preview-close" role="button" aria-label="Close preview">
                             <i className="ri-close-line"></i>
                         </div>
-                        <img src={null} id="previewImg" alt="Preview" />
+                        <img src="" id="previewImg" alt="Preview" />
                         <div className="preview-timer-container">
                             <div className="preview-timer-bar" id="previewTimer"></div>
                         </div>
                     </div>
                 </div>
-
-                {/* Bootstrap JS */}
-
             </div>
         </>
     );

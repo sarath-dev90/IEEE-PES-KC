@@ -51,7 +51,7 @@ export default function PastEventsPage() {
                 <div className="container">
 
                     <div className="section-header mb-5 text-center">
-                        <span className="section-badge">Looking Back</span>
+                        
                         <h2 className="section-title mt-3">Events We've Organized</h2>
                         <p className="section-desc mx-auto" style={{ maxWidth: '600px' }}>A collection of memorable events that have shaped our community over the years.</p>
                     </div>

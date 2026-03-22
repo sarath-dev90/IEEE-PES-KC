@@ -48,7 +48,7 @@ export default function UpcomingEventsPage() {
                 <div className="container">
 
                     <div className="section-header mb-5 text-center">
-                        <span className="section-badge">Don't Miss Out</span>
+                        
                         <h2 className="section-title mt-3">Upcoming Events</h2>
                         <p className="section-desc mx-auto" style={{ maxWidth: '600px' }}>Conferences, workshops, webinars, and competitions — stay connected and grow with us.</p>
                     </div>

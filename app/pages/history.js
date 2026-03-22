@@ -29,7 +29,7 @@ export default function HistoryPage() {
             <section className="section-padding">
                 <div className="container">
                     <div className="section-header mb-5">
-                        <span className="section-badge">Milestones</span>
+                        
                         <h2 className="section-title mt-3">Our Journey Through the Years</h2>
                         <p className="section-desc">From a small group of passionate engineers to one of Kerala&apos;s most impactful technical communities.</p>
                     </div>

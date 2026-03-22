@@ -58,7 +58,7 @@ export default function VisionMissionPage() {
                     {/* Core Values */}
                     <div className="mt-5 pt-4">
                         <div className="section-header">
-                            <span className="section-badge">What We Stand For</span>
+                            
                             <h2 className="section-title mt-3">Core Values</h2>
                         </div>
                         <div className="row g-4 mt-2">

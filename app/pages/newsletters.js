@@ -83,7 +83,7 @@ export default function NewslettersPage() {
                         <>
                             {/* Newsletters Section */}
                             <div className="section-header mb-5">
-                                <span className="section-badge">Newsletters</span>
+                                
                                 <h2 className="section-title mt-3">Chapter Newsletters</h2>
                                 <p className="section-desc">Stay updated with our newsletters covering events, achievements, and technical insights.</p>
                             </div>
@@ -98,7 +98,7 @@ export default function NewslettersPage() {
 
                             {/* Magazines Section */}
                             <div className="section-header mb-5 mt-5">
-                                <span className="section-badge">Magazines</span>
+                                
                                 <h2 className="section-title mt-3">Chapter Magazines</h2>
                                 <p className="section-desc">Deep dives into technical topics and comprehensive chapter reports in our magazines.</p>
                             </div>

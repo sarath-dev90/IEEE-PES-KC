@@ -19,7 +19,7 @@ export default function AboutPage() {
                 <div className="container">
                     <div className="row align-items-center g-5">
                         <div className="col-lg-6">
-                            <span className="section-badge">Who We Are</span>
+                            
                             <h2 className="section-title mt-3">IEEE PES Kerala Chapter</h2>
                             <p className="mt-3">
                                 The IEEE Power and Energy Society (PES) Kerala Chapter is one of the most active chapters under the IEEE Kerala Section. We bring together engineers, researchers,
@@ -62,7 +62,7 @@ export default function AboutPage() {
                     <div className="row justify-content-center">
                         <div className="col-lg-8">
                             <div className="chair-message">
-                                <div className="section-badge mb-3">Message from Chair</div>
+                                
                                 <h3>Welcome to IEEE PES Kerala Chapter</h3>
                                 <p className="mt-3">
                                     It is my privilege to serve as the Chair of the IEEE Power and Energy Society (PES) Kerala Chapter. Our chapter stands at the intersection of innovation,
