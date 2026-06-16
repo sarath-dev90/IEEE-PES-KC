@@ -1,15 +1,31 @@
 'use client';
 import { useState, useEffect } from 'react';
 import PageLayout from '../components/PageLayout';
-import PageBanner from '../components/PageBanner';
-import Image from 'next/image';
 import Link from 'next/link';
+import Image from 'next/image';
 
+// 1. Updated Category Order with matching labels and descriptions
 const CATEGORY_ORDER = [
-    { id: 'professionals', label: 'Professional Members as Office Bearers' },
-    { id: 'yp', label: 'Young Professionals' },
-    { id: 'gsac', label: 'Graduate Student Activities Committee' },
-    { id: 'slt', label: 'Student Leadership Team' }
+    { 
+        id: 'professionals', 
+        label: 'Professional Execom',
+        desc: 'Core leadership guiding the strategic vision of the section.'
+    },
+    { 
+        id: 'yp', 
+        label: 'Young Professionals',
+        desc: 'Empowering the next generation of power and energy leaders.'
+    },
+    { 
+        id: 'gsac', 
+        label: 'Graduate Student Activities Committee',
+        desc: 'Fostering research and academic excellence among graduate students.'
+    },
+    { 
+        id: 'slt', 
+        label: 'Student Leadership Team',
+        desc: 'Driving student engagement and campus initiatives.'
+    }
 ];
 
 export default function ExecomPage() {
@@ -49,49 +65,66 @@ export default function ExecomPage() {
     const renderMemberCard = (m, i) => (
         <div key={i} className="col-12 col-sm-6 col-md-4 col-lg-3">
             <div className="execom-card">
-                <div className="execom-avatar">
-                    {m.imageUrl ? (
-                        <Image src={m.imageUrl} alt={m.name} width={180} height={180} style={{ objectFit: 'cover' }} />
-                    ) : (
-                        <div className="execom-avatar-placeholder">
-                            <i className="ri-user-3-line"></i>
+                <div className="execom-image-frame">
+                    <div className="execom-avatar-border">
+                        <div className="execom-avatar">
+                            {m.imageUrl ? (
+                                <Image 
+                                    src={m.imageUrl} 
+                                    alt={m.name} 
+                                    fill
+                                    style={{ objectFit: 'cover', objectPosition: 'center top' }} 
+                                />
+                            ) : (
+                                <div className="execom-avatar-placeholder">
+                                    <i className="ri-user-3-line"></i>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
-                <h4>{m.name}</h4>
-                <p>{m.role}</p>
+
+                <p className="execom-role">{m.role}</p>
+                <h4 className="execom-name">{m.name}</h4>
 
                 <div className="execom-social">
                     {m.email && (
                         <a href={`mailto:${m.email}`} title="Email">
-                            <i className="ri-mail-line"></i>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
                         </a>
                     )}
                     {m.linkedin && (
                         <a href={m.linkedin} target="_blank" rel="noopener noreferrer" title="LinkedIn">
-                            <i className="ri-linkedin-fill"></i>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                                <rect x="2" y="9" width="4" height="12"></rect>
+                                <circle cx="4" cy="4" r="2"></circle>
+                            </svg>
                         </a>
                     )}
                 </div>
             </div>
         </div>
     );
-
+    
     return (
         <PageLayout>
-            <PageBanner
-                title="Executive Committee"
-                subtitle="2025 – 2026"
-                breadcrumb={[{ label: 'Home', href: '/' }, { label: 'Execom' }]}
-            />
-
-            <section className="section-padding" style={{ background: '#f8fafc' }}>
+            <section className="section-padding bg-diagonal-pattern">
                 <div className="container">
-                    <div className="section-header text-center mb-5">
-                        
-                        <h2 className="section-title mt-3">2025–2026 Executive Committee</h2>
-                        <p className="section-desc mx-auto" style={{ maxWidth: '600px' }}>
-                            Dedicated professionals and volunteers driving the innovation and excellence of IEEE PES Kerala Chapter.
+                    
+                    {/* 2. Left-Aligned Header Section */}
+                    <div className="section-header text-start mb-5 pb-4">
+                        <span className="text-uppercase" style={{ color: 'var(--pes-green)', fontWeight: 600, letterSpacing: '1.5px', fontSize: '13px' }}>
+                            Leadership 2026
+                        </span>
+                        <h2 className="section-title mt-2 mb-3" style={{ color: 'var(--header-color)', fontWeight: 800, fontSize: '2.5rem' }}>
+                            Executive Committee
+                        </h2>
+                        <p className="section-desc mb-0" style={{ maxWidth: '800px', fontSize: '1.05rem', color: '#555', lineHeight: '1.7', marginLeft: 0 }}>
+                            The IEEE PES Kerala Section is led by a dedicated team of professionals and academicians committed to advancing the power and energy industry through technical excellence and community engagement.
                         </p>
                     </div>
 
@@ -103,11 +136,15 @@ export default function ExecomPage() {
                         </div>
                     ) : currentMembers.length > 0 ? (
                         <>
-                            {CATEGORY_ORDER.map(({ id, label }) => {
+                            {/* 3. Category Headers with Green Accent Line */}
+                            {CATEGORY_ORDER.map(({ id, label, desc }) => {
                                 if (!groupedMembers[id] || groupedMembers[id].length === 0) return null;
                                 return (
-                                    <div key={id} className="mb-5">
-                                        <h3 className="text-center mb-4" style={{ color: 'var(--pes-green)', fontWeight: 800 }}>{label}</h3>
+                                    <div key={id} className="mb-5 pb-3">
+                                            <div className="mb-4 text-start"   style={{ paddingLeft: '0' }}>
+                                                <h3 style={{ color: 'var(--header-color)', fontWeight: 700, margin: 0, fontSize: '1.8rem' }}>{label}</h3>
+                                                {desc && <p style={{ color: '#666', margin: '6px 0 0 0', fontSize: '0.95rem' }}>{desc}</p>}
+                                            </div>
                                         <div className="row g-4 justify-content-center">
                                             {groupedMembers[id].map((m, i) => renderMemberCard(m, i))}
                                         </div>
@@ -116,10 +153,12 @@ export default function ExecomPage() {
                             })}
 
                             {otherCategories.map(cat => (
-                                <div key={cat} className="mb-5">
-                                    <h3 className="text-center mb-4" style={{ color: 'var(--pes-green)', fontWeight: 800, textTransform: 'capitalize' }}>
+                                <div key={cat} className="mb-5 pb-3">
+                                    <div className="mb-4 text-start" style={{ paddingLeft: '16px', borderLeft: '4px solid var(--pes-green)' }}>
+                                    <h3 style={{ color: 'var(--header-color)', fontWeight: 700, margin: 0, fontSize: '1.8rem', textTransform: 'capitalize' }}>
                                         {cat}
                                     </h3>
+                                </div>
                                     <div className="row g-4 justify-content-center">
                                         {groupedMembers[cat].map((m, i) => renderMemberCard(m, i))}
                                     </div>
