@@ -2032,12 +2032,7 @@ a {
     position: relative !important;
 }
 
-.execom-avatar img {
-    object-fit: cover !important;
-    object-position: center top !important;
-    filter: grayscale(100%) !important;
-    transition: filter 0.5s ease !important;
-}
+
 
 .execom-card:hover .execom-avatar img {
     filter: grayscale(0%) !important;
