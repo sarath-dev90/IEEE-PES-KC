@@ -2,30 +2,27 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: [
-      'your-worker-url.workers.dev',
-      'cdn.yourdomain.com',
-      'localhost'
-    ],
-    // For Cloudflare R2 images
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**.workers.dev',
+       
+        hostname: 'pub-c13015ac09ec4a868fff8c8caaa675fa.r2.dev', 
       },
       {
         protocol: 'https',
-        hostname: 'cdn.yourdomain.com',
+        hostname: '*.ieeepeskc.workers.dev', 
       },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      }
     ],
   },
-  // Turbopack configuration for Next.js 16
   turbopack: {
     resolveAlias: {
       '@': './src',
     },
   },
-  // Webpack fallback (for compatibility)
   webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
