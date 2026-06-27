@@ -69,11 +69,12 @@ export default function ExecomPage() {
                     <div className="execom-avatar-border">
                         <div className="execom-avatar">
                             {m.imageUrl ? (
-                                <Image 
-                                    src={m.imageUrl} 
-                                    alt={m.name} 
-                                    fill
-                                    style={{ objectFit: 'cover', objectPosition: 'center top' }} 
+                               <Image 
+                                src={m.imageUrl} 
+                                alt={m.name} 
+                                fill
+                                sizes="(max-width: 576px) 100vw, (max-width: 768px) 50vw, (max-width: 992px) 33vw, 25vw"
+                                style={{ objectFit: 'cover', objectPosition: 'center top' }} 
                                 />
                             ) : (
                                 <div className="execom-avatar-placeholder">
